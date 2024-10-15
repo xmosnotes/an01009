@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
 include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
-project(app_an01009)
+project(app_an02020)
 
 set(APP_HW_TARGET xk-small.xn)
 
 # Use sw_usb_audio deps and add lib_awe
-set(APP_DEPENDENT_MODULES "lib_xua" "lib_board_support")
+set(APP_DEPENDENT_MODULES "lib_sigma_delta"
+                          "lib_xua")
 
 set(APP_PCA_ENABLE ON)
 
@@ -14,8 +15,7 @@ set(APP_COMPILER_FLAGS                          -fcomment-asm
                                                 -report
                                                 -lquadflash
                                                 -g
-                                                -DBOARD_SUPPORT_BOARD=XK_AUDIO_316_MC_AB
-                                                -DUSB_TILE=tile[0]
+                                                -DUSB_TILE=tile[1]
                                                 -DXUA_QUAD_SPI_FLASH=1
                                                 )
 
