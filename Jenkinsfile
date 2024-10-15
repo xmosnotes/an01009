@@ -29,7 +29,7 @@ getApproval()
 pipeline {
     agent {label 'documentation'}
     environment {
-      REPO_NAME = 'an0xxxx'
+      REPO_NAME = 'an01009'
     }
     parameters {
       string(

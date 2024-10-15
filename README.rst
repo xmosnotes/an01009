@@ -1,25 +1,16 @@
-HOW TO USE THIS TEMPLATE:
-
-DO NOT FORK THIS REPO - CLICK "Use this template" ⬆️
-
-ENTER APP NOTE NUMBER AND DESCRIPTION, CLICK "Create repository"
-
-WAIT A FEW MINS - A GITHUB ACTION WILL RUN IN THE NEW REPO TO CUSTOMISE/RENAME FILES AND TIDY UP
-
-THIS MESSAGE WILL SELF DESTRUCT IN THE NEW REPO
 :orphan:
 
-##############################
-AN0xxxx: app_note_title
-##############################
+########################################################################
+AN01009: Optimizing USB Audio for stereo output, battery powered devices
+########################################################################
 
 :vendor: XMOS
-:version: 1.0.0
+:version: 2.0.0
 :scope: Example
-:description: <BRIEF DESCRIPTION OF APP NOTE>
-:category: <[Voice | Audio | Vision | General Purpose]>
-:keywords: <LIST OF KEYWORDS HERE>
-:hardware: <LIST OF SUPPORTED BOARDS HERE>
+:description: How to reduce the power of USB audio designs
+:category: Audio
+:keywords: Audio, USB, Power consumption
+:hardware: xk-316-mc-audio
 
 Overview
 ********
