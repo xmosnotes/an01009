@@ -12,6 +12,7 @@
 /* Board hardware setup */
 extern unsafe client interface i2c_master_if i_i2c_client;
 extern void board_setup();
+extern void power_down();
 
 /* Declarations that will be inserted in main.xc from lib_xua */
 #define USER_MAIN_DECLARATIONS                                          \
@@ -23,6 +24,7 @@ extern void board_setup();
         board_setup();                                                  \
         par {                                                           \
             i2c_master(i2c, 1, p_scl, p_sda, 100);                      \
+            power_down();                                               \
         }                                                               \
     }                                                                   \
     on tile[1]: {                                                       \

@@ -15,7 +15,8 @@ set(APP_COMPILER_FLAGS                          -fcomment-asm
                                                 -lquadflash
                                                 -g
                                                 -DBOARD_SUPPORT_BOARD=XK_AUDIO_316_MC_AB
-                                                -DUSB_TILE=tile[0]
+                                                -DUSB_TILE=tile[1]
+                                                -DXUD_CORE_CLOCK=500
                                                 -DXUA_QUAD_SPI_FLASH=1
                                                 )
 
