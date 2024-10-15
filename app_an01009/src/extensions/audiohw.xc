@@ -9,7 +9,7 @@
 
 static xk_audio_316_mc_ab_config_t board_config =
 {
-    CLK_CS2100,             // clk_mode
+    CLK_FIXED,              // clk_mode
     CODEC_MASTER,           // dac_is_clk_master
     (DEFAULT_FREQ % 22050 == 0) ? MCLK_441 : MCLK_48,     // default_mclk
     96000,               // pll_sync_freq. Ignored in this app.

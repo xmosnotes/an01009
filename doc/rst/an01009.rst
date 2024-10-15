@@ -94,7 +94,7 @@ configured to stereo output, USB Audio Class 2, 192kHz which is typical for DAC 
   +----------------------------+---------------+----------------+---------------+
   |        Configuration       |  VSUP Power   |  3v3 I/O Power |    Total      |
   +============================+===============+================+===============+
-  | 2 out UAC2 192KHz baseline |   286.3mW     |    56.2mW      |   342.5mW     |
+  | 2 out UAC2 48KHz baseline  |   239 mW      |    xxx mW      |   342.5mW     |
   +----------------------------+---------------+----------------+---------------+  
 
 Next, external hardware changes were considered to help reduce power consumption. The XS1-U6 VSUP
