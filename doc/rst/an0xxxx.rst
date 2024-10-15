@@ -1,49 +1,146 @@
-##############################
-AN0xxxx: app_note_title
-##############################
+########################################################################
+AN01009: Optimizing USB Audio for stereo output, battery powered devices
+########################################################################
 
-************
-Introduction
-************
+This application note characterizes the expected power usage of the XMOS USB Audio reference design
+running on the XS1-U6 device, configured for stereo out applications. The second part of this document
+outlines optional changes to the hardware and firmware, with the goal of reducing power consumption and
+extending battery life.
 
-Introduction text
+The USB Audio reference design is optimized for performance, configurability and low resource usage.
+The standard reference design running on the XS1-U6 comfortably fits within the USB bus power envelope
+with plenty of power available for support components and audio CODECs. 
 
-***********
-Section one
-***********
+When powering systems from a battery, a fixed amount of energy is available. Reduction of power
+dissipation allows the designer to increase battery life or keep the same battery life for a smaller
+battery, bringing cost and form factor savings. By making different design choices and constraining
+the original XMOS USB Audio reference design, various power optimizations can be applied to help
+achieve these goals.
 
-Section one text
+This application note assumes that the reader is familiar with the `XMOS architecture.
+<http://www.xmos.com/published/xcore-architecture?version=latest>`_
+and the `XMOS USB Audio reference design. <http://www.xmos.com/products/reference-designs/dj>`_
 
-Sub-section
-===========
+Overview
+--------
 
-Sub-section text
+The power measurements have been made using the following test harness:
 
-Another sub-section
-===================
+- USB Audio 2.0 DJ Kit hardware. This board was modified to allow measurement of the
+  current and voltage of the VSUP (XS1-U6 core) pin. In addition, the VDDIO (3v3 for
+  I/O) supply pins were isolated from the rest of the board to allow the I/O power
+  consumed by the XS1-U6 device to be measured. Two kits were modified to allow
+  correlation of two different systems.
 
-Another sub-section text
+- USB Audio firmware, *sw_usb_audio*. The version used was 6.1.0 which was modified
+  to support lower power operation. These code modifications will be rolled into later
+  versions of the stereo configurations. Consequently, the baseline numbers shown here
+  will also apply to future versions of this reference design.
 
-***********
-Section two
-***********
+- Host Macbook Air machine running OSX version 10.8.3 (Mountain Lion) with integrated
+  USB Audio Class 2 driver.
 
-Section two text
+- Host Windows machine running Windows 7 SP1 with v1.61 Thesycon USB Audio Class 2 driver.
 
-Section two subsection
-======================
+- Gold-tree test harness Windows 7 SP1 desktop system including EHCI controller, 5
+  HS hubs and various USB devices sharing the USB bus.
 
-Sub section text
+A diagram of the chip power measurement method is shown below. There are
+multiple power domains within the XS1-U6 device. In this
+application, all of the power is drawn through the VSUP (core
+and PHY supply) and VDDIO (I/O supply) pins. By multiplying the current
+and voltage on these rails and summing both supplies, the total chip
+power is determined.
 
-Section two subsubsection
--------------------------
+.. figure:: images/test_setup.*
 
-Sub sub section text
+  Test Harness
 
-Another subsubsection
----------------------
+For each configuration, basic enumeration and playback was tested on
+both OSX and Windows 7 hosts, and power when playing audio was measured. For the final,
+lowest power system listed, a hub test was performed to test for the presence of audio
+glitches (lost samples) over a period several hours. This is a subset of the XMOS USB Audio
+test plan. No audio glitches were present on the
+stream during the testing performed and hence the lowest power configuration successfully passed the test subset.
 
-Sub sub section text
+For further information about USB testing and compatibility of XMOS
+USB Audio reference designs, please refer to the `USB Audio System
+Requirements Guide. <http://www.xmos.com/published/xmos-usb-and-usb-audio-system-requirements-guide>`_
+
+Power measurement and optimizations 
+-----------------------------------
+
+A number of different optimizations were applied to the reference design and their
+impact was measured. These optimizations can be grouped into categories.
+
+.. points::
+ 
+   - Reference design software architecture optimizations and configuration for
+     stereo output only feature set. Multiple power optimization were already applied,
+     and will be part of future releases. The result of these optimizations are characterized
+     in the baseline power figure below. 
+
+   - Hardware modification including supply voltage scaling and use of high quality inductor. 
+
+   - Reference design feature reduction. Reduction of power by lowering the audio sample
+     frequency to 48kHz and use of full speed USB Audio Class 1 and full speed USB.
+
+The table below shows the measured power consumption of XS1-U6 USB Audio reference design,
+configured to stereo output, USB Audio Class 2, 192kHz which is typical for DAC type applications.
+
+.. table :: Power saving from reference design feature reduction
+  :class: narrow
+
+  +----------------------------+---------------+----------------+---------------+
+  |        Configuration       |  VSUP Power   |  3v3 I/O Power |    Total      |
+  +============================+===============+================+===============+
+  | 2 out UAC2 192KHz baseline |   286.3mW     |    56.2mW      |   342.5mW     |
+  +----------------------------+---------------+----------------+---------------+  
+
+Next, external hardware changes were considered to help reduce power consumption. The XS1-U6 VSUP
+pin supplies two internal buck DC-DC converters and supports an input supply voltage of between
+3V0 and 5V5. The regulators are more efficient when managing a smaller voltage
+drop, so the power saving was measured for a VSUP of 3V3 instead of 5V0 typical VBUS used for USB.
+The standard inductor (200mR ESR) for DC-DC1 that supplies the
+xCORE tile was replaced with a high quality, low ESR (65mR) version to
+minimize power loss.
+
+.. table :: Power saving from powering down unused features
+  :class: narrow
+
+  +-----------------------------+---------------+----------------+---------------+
+  |        Configuration        |  VSUP Power   |  3v3 I/O Power |    Total      |
+  +=============================+===============+================+===============+
+  | Reduced VSUP & HiQ inductor |   269.9mW     |    56.1mW      |   326.0mW     |
+  +-----------------------------+---------------+----------------+---------------+
+
+Reduction of VSUP and use of a higher quality inductor, in this case, yielded a power saving of 16.5mW.
+
+Finally, feature reduction were applied to further save power. In many cases, it is
+possible to reduce audio sample frequency from 192kHz to 48kHz, which also then allows
+the use of full speed USB (12Mbps) and USB Audio Class 1 instead of high speed USB
+(480Mbps) and USB Audio Class 2. Note that the samples are still bit-perfect 24-bit and
+the clocking is asynchronous, so the system still delivers very high audio quality.
 
 
+.. table :: Power saving from feature reduction
+  :class: narrow
 
+  +----------------------------------+---------------+----------------+---------------+
+  |          Configuration           |  VSUP Power   |  3v3 I/O Power |    Total      |
+  +==================================+===============+================+===============+
+  |  48kHz sample frequency, UAC2    |   268.6mW     |    53.1mW      |  321.8mW      |
+  +----------------------------------+---------------+----------------+---------------+
+  |  48kHz sample frequency, UAC1    |   261.1mW     |    41.4mW      |  302.5mW      |
+  +----------------------------------+---------------+----------------+---------------+
+
+
+Conclusion
+----------
+
+This application note shows how some simple design optimizations can be made to reduce
+overall power consumption by up to 12%, compared with the baseline reference design.
+Even though the XS1-U6 provides 500MIPS of highly deterministic performance, flexible
+interfacing and a high level of analog integration, the device combined with our USB
+Audio firmware provides the highest quality USB Audio interface while drawing as little
+as 300mW. 
