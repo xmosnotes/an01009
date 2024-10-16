@@ -106,16 +106,32 @@ total power
 
 .. tabularcolumns:: lrrr
 
-============================== =========== ========== ========
-Configuration                  Core Power  I/O Power  Total  
-============================== =========== ========== ========
-UAC2 48KHz, 600/600 MHz         244 mW       77 mW     321 mW
-UAC2 48KHz, 500/500 MHz         209 mW       77 mW     288 mW
-UAC2 48KHz, 500/10 MHz          163 mW       77 mW     240 mW
-UAC2 48KHz, 500/10 MHz, 0.85V   145 mW       77 mW     222 mW
-UAC1 48KHz, 500/10 MHz, 0.85V   145 mW       11 mW     156 mW
-============================== =========== ========== ========
+================================== =========== ========== ========
+Configuration                      Core Power  I/O Power  Total  
+================================== =========== ========== ========
+UAC2 48KHz, 600/600 MHz             244 mW       77 mW     321 mW
+UAC2 48KHz, 500/500 MHz             209 mW       77 mW     288 mW
+UAC2 48KHz, 500/10 MHz              163 mW       77 mW     240 mW
+UAC2 48KHz, 500/10 MHz, 0.85V       145 mW       77 mW     222 mW
+UAC2 192KHz, 500/10 MHz, 0.85V      146 mW       77 mW     223 mW
+UAC1 48KHz, 500/10 MHz, 0.85V       145 mW       11 mW     156 mW
+UAC1 48KHz, 500/10 MHz, 0.85V, NF   113 mW       11 mW     125 mW
+UAC1 48KHz, 500/10 MHz, 0.85V, NS    90 mW       11 mW     101 mW
+UAC1 96KHz, 500/10 MHz, 0.85V, NS    91 mW       11 mW     102 mW
+UAC1 96KHz, 500/10 MHz, 0.85V, NT    68 mW       11 mW      79 mW
+UAC2 192KHz, 500/10 MHz, 0.85V, NT   72 mW       77 mW     149 mW
+================================== =========== ========== ========
 
+The last five cases do some things that are not necessarily legal or
+supported, but experiments in changing the code base to remove some polling
+behaviour:
+
+* NF, switches fast mode in the IO loop off (!)
+
+* NS, includes NF and removes the default case in the select statement in
+  ``XUA_Buffer_Ep()`` (PR #436 in lib_xua)
+
+* NT, includes NS/NF and adds a short 1 us sleep in ``XUA_Buffer_Decouple()``
 
 Hardware for Minimal Power Consumption
 --------------------------------------

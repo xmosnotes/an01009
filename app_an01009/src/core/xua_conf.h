@@ -42,7 +42,7 @@
 
 /* Maximum frequency device runs at */
 #ifndef MAX_FREQ
-#define MAX_FREQ           (48000)
+#define MAX_FREQ           (192000)
 #endif
 
 /* Minimum frequency device runs at */
@@ -50,7 +50,7 @@
 #define MIN_FREQ           (48000)
 #endif
 
-#define AUDIO_CLASS              (1)
+#define AUDIO_CLASS              (2)
 
 #define XUA_USE_SW_PLL     (0)
 
