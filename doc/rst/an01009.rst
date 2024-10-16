@@ -8,8 +8,10 @@ stere- out applications. The second part of this document outlines optional
 changes to the hardware and firmware, with the goal of reducing power
 consumption and minimising power consumption.
 
-A companion application note, XXX, shows how more power cna be saved by not
-using an external DAC.
+This application note assumes that the design comprises a an XMOS device to
+interface an external DAC over I2S to USB. A companion application note, XXX, shows
+how power can be saved without using I2S and instead using an XMOS device
+to directly interface USB to an amplifier.
 
 The USB Audio reference design is optimized for performance,
 configurability and low resource usage. The standard reference design
@@ -23,9 +25,9 @@ cost and form factor savings. By making different design choices and
 constraining the original XMOS USB Audio reference design, various power
 optimizations can be applied to help achieve these goals.
 
-[UPDATE LINKS] This application note assumes that the reader is familiar with the `XMOS architecture.
-<http://www.xmos.com/published/xcore-architecture?version=latest>`_
-and the `XMOS USB Audio reference design. <http://www.xmos.com/products/reference-designs/dj>`_
+This application note assumes that the reader is familiar with the
+`The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
+and the `XMOS USB Audio reference design. <https://www.xmos.com/develop/usb-multichannel-audio/>`_
 
 Overview
 --------
@@ -43,20 +45,20 @@ The power measurements have been made using the following test harness:
 
 A diagram of the chip power measurement method is shown below. There are
 multiple power domains within the XCORE.AI device. In this application, all
-of the power is drawn through the VSUP (core and PHY supply) and VDDIO (I/O
-supply) pins. By multiplying the current and voltage on these rails and
-summing both supplies, the total chip power is determined.
+power originates from VBUS, and is consumed as core power (0.9V nominal),
+1.8V analog (for USB), 3.3V analog (for USB), and either 1.8 or 3.3V for
+digital IO. We are assuming that we use DC-DC converters with a reasonable
+efficiency (not LDOs).
 
-.. figure:: images/test_setup.*
+We measure the core voltage power consumption in the 5V domain; we estimate
+the other supplies.
+
+.. figure:: ../images/power-setup.*
 
             Test setup
 
 For each configuration, basic enumeration and playback was tested on OSX,
 and power when playing audio was measured.
-
-[[UPDATE LINKS]] For further information about USB testing and compatibility of XMOS
-USB Audio reference designs, please refer to the `USB Audio System
-Requirements Guide. <http://www.xmos.com/published/xmos-usb-and-usb-audio-system-requirements-guide>`_
 
 Power measurement and optimizations 
 -----------------------------------
@@ -89,42 +91,73 @@ We compute IO power to be as follows (note these have not yet been measured):
   ========================= ======================= ======================
   IVCC33A                   11-40 uA (negligible)   1 mA (3 mW)
   IVCC18A                   4-5 mA (7-9 mW)         30-36 mA (54-65 mW)
-  Oscillator, 1.8V CHECK    4 mW                    4 mW
-  **Total**                 **13 mW**               **72 mW**
+  Oscillator, 1.8V CHECK    0.5 mW                  0.5 mW
+  I2S power                 0.5 mw                  0.5 mw
+  DC-DC efficiency          90%                     90%
+  **Total**                 **11 mW**               **77 mW**
   ========================= ======================= ======================
 
+The table below shows the measured core power consumption of XCORE.AI USB Audio
+reference design with different settings for sample rate, USB Audio class,
+clock rates, and core voltage
 
-The table below shows the measured power consumption of XS1-U6 USB Audio reference design,
-configured to stereo output, USB Audio Class 2, 192kHz which is typical for DAC type applications.
+  ============================== =========== ========== ========
+  Configuration                  Core Power  I/O Power  Total  
+  ============================== =========== ========== ========
+  UAC2 48KHz, 600/600 MHz         244 mW       77 mW     321 mW
+  UAC2 48KHz, 500/500 MHz         209 mW       77 mW     288 mW
+  UAC2 48KHz, 500/10 MHz          163 mW       77 mW     240 mW
+  UAC2 48KHz, 500/10 MHz, 0.85V   145 mW       77 mW     222 mW
+  UAC1 48KHz, 500/10 MHz, 0.85V   145 mW       11 mW     156 mW
+  ============================== =========== ========== ========
 
-.. table :: Power saving from reference design feature reduction
-  :class: narrow
 
-  +----------------------------+---------------+----------------+---------------+
-  |        Configuration       |  VSUP Power   |      I/O Power |    Total      |
-  +============================+===============+================+===============+
-  | 2 out UAC2 48KHz baseline  |   239 mW      |     72 mW      |   315  mW     |
-  | 2 tiles, 7 threads, 600 MHz|               |                |               |
-  +----------------------------+---------------+----------------+---------------+  
-  | 2 out UAC2 48KHz           |   205 mW      |     72 mW      |   279  mW     |
-  | 2 tiles, 7 threads, 500 MHz|               |                |               |
-  +----------------------------+---------------+----------------+---------------+  
-  | 2 out UAC2 48KHz           |   160 mW      |     72 mW      |   234  mW     |
-  | 2 tiles, 7 threads, 500 MHz|               |                |               |
-  | tile 0 slow                |               |                |               |
-  +----------------------------+---------------+----------------+---------------+  
-  | 2 out UAC2 48KHz           |   142.5 mW    |     72 mW      |   217  mW     |
-  | 2 tiles, 7 threads, 500 MHz|               |                |               |
-  | tile 0 slow, low voltage   |               |                |               |
-  +----------------------------+---------------+----------------+---------------+  
-  | 2 out UAC1 48KHz           |   142.5 mW    |     13 mW      |   156  mW     |
-  | 2 tiles, 7 threads, 500 MHz|               |                |               |
-  | tile 0 slow, low voltage   |               |                |               |
-  +----------------------------+---------------+----------------+---------------+  
+Hardware for Minimal Power Consumption
+--------------------------------------
 
+This application measured the power on an XK-AUDIO-316-MC-AB board, as that
+is commercially available nad has a 0.1 ohm resistor across the 5V input to
+the core power supply.
+
+In order to build a design that uses minimal power you would need to:
+
+* Put all IO on tile 0; in paprticular I2S and I2C
+
+* Use 1.8V IO (for example the QF60A part)
+
+* Use a DC-DC to generate 1.8V from 5V
+
+* Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very
+  little, so an LDO may be an option)
+
+* Design the core power supply so that the VDD pins of the XCORE device
+  are at 0.85V. The supported voltage range is 0.85..0.95V.
 
 Conclusion
 ----------
 
 This application note shows how some simple design optimizations can be made to reduce
 overall power consumption by close to 2x, compared with the baseline reference design.
+
+Further Information
+-------------------
+
+* `xcore.ai Power Consumption Estimation <http://www.xmos.com/?s=XM-014234-AN>`_
+
+* `XU316-1024-QF60A datasheet <https://www.xmos.com/?s=XM-014034-PC>`_
+
+* `The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
+
+|newpage|
+
+Document History
+----------------
+
++------------------+-------------+-------------------------------------------+
+| **Date**         | **Release** | **Comment**                               |
++==================+=============+===========================================+
+| 2024-10-15       | 2.0         | Updated to XCORE.AI                       |
++------------------+-------------+-------------------------------------------+
+| 2016             | 1.0         | First release                             |
++------------------+-------------+-------------------------------------------+
+
