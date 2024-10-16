@@ -54,6 +54,7 @@ We measure the core voltage power consumption in the 5V domain; we estimate
 the other supplies.
 
 .. figure:: ../images/power-setup.*
+            :width: 50%
 
             Test setup
 
@@ -65,51 +66,55 @@ Power measurement and optimizations
 
 A number of different optimizations were applied to the reference design and their
 impact was measured. These optimizations can be grouped into categories.
-
-.. points::
  
-   - Reduce the clock frequency to 500 MHz from the standard 600 Mhz.
-     It can even go down to 400 MHz?
+* Reduce the clock frequency to 500 MHz from the standard 600 Mhz.
+  It can even go down to 400 MHz?
 
-   - Move all the software to one physical core, Slow the switch down, and
-     slow the other core down. Note: an extra 3 mW can be saved by
-     switching the other core off, but that requires a hardware
-     modification to the board as the I2C is connected to that tile.
+* Move all the software to one physical core, Slow the switch down, and
+  slow the other core down. On the hardware that we use for measuring power
+  this is awkward as the I2S and I2C are connected to two separate physical
+  cores. An extra 3 mW can be saved by switching the other core off rather
+  than just slowing it down.
 
-   - Reduce the core voltage to the bottom of the allowed range (0.85V)
-     rather than the middle of the allowed range (0.9V)
-     
-   - Reference design feature reduction. Reduction of power by lowering the audio sample
-     frequency to 48kHz and use of full speed USB Audio Class 1 and full
-     speed USB. 
+* Reduce the core voltage to the bottom of the allowed range (0.85V)
+  rather than the middle of the allowed range (0.9V)
+  
+* Reference design feature reduction. Reduction of power by lowering the
+  audio sample frequency to 48kHz and use of full speed USB Audio Class 1
+  and full speed USB.
 
 The latter is important as it affects the non-core power consumed.
 We compute IO power to be as follows (note these have not yet been measured):
 
-  ========================= ======================= ======================
-  Current                   FSRX (12 MBps)          HSRX (480 mbit/s)
-  ========================= ======================= ======================
-  IVCC33A                   11-40 uA (negligible)   1 mA (3 mW)
-  IVCC18A                   4-5 mA (7-9 mW)         30-36 mA (54-65 mW)
-  Oscillator, 1.8V CHECK    0.5 mW                  0.5 mW
-  I2S power                 0.5 mw                  0.5 mw
-  DC-DC efficiency          90%                     90%
-  **Total**                 **11 mW**               **77 mW**
-  ========================= ======================= ======================
+.. tabularcolumns:: lrr
+
+========================= ======================= ======================
+Current                   FSRX (12 MBps)          HSRX (480 mbit/s)
+========================= ======================= ======================
+IVCC33A                   11-40 uA (negligible)   1 mA (3 mW)
+IVCC18A                   4-5 mA (7-9 mW)         30-36 mA (54-65 mW)
+Oscillator, 1.8V CHECK    0.5 mW                  0.5 mW
+I2S power                 0.5 mw                  0.5 mw
+DC-DC efficiency          90%                     90%
+**Total**                 **11 mW**               **77 mW**
+========================= ======================= ======================
 
 The table below shows the measured core power consumption of XCORE.AI USB Audio
 reference design with different settings for sample rate, USB Audio class,
-clock rates, and core voltage
+clock rates, and core voltage. We then add the calculated I/O power and a
+total power
 
-  ============================== =========== ========== ========
-  Configuration                  Core Power  I/O Power  Total  
-  ============================== =========== ========== ========
-  UAC2 48KHz, 600/600 MHz         244 mW       77 mW     321 mW
-  UAC2 48KHz, 500/500 MHz         209 mW       77 mW     288 mW
-  UAC2 48KHz, 500/10 MHz          163 mW       77 mW     240 mW
-  UAC2 48KHz, 500/10 MHz, 0.85V   145 mW       77 mW     222 mW
-  UAC1 48KHz, 500/10 MHz, 0.85V   145 mW       11 mW     156 mW
-  ============================== =========== ========== ========
+.. tabularcolumns:: lrrr
+
+============================== =========== ========== ========
+Configuration                  Core Power  I/O Power  Total  
+============================== =========== ========== ========
+UAC2 48KHz, 600/600 MHz         244 mW       77 mW     321 mW
+UAC2 48KHz, 500/500 MHz         209 mW       77 mW     288 mW
+UAC2 48KHz, 500/10 MHz          163 mW       77 mW     240 mW
+UAC2 48KHz, 500/10 MHz, 0.85V   145 mW       77 mW     222 mW
+UAC1 48KHz, 500/10 MHz, 0.85V   145 mW       11 mW     156 mW
+============================== =========== ========== ========
 
 
 Hardware for Minimal Power Consumption
@@ -119,19 +124,24 @@ This application measured the power on an XK-AUDIO-316-MC-AB board, as that
 is commercially available nad has a 0.1 ohm resistor across the 5V input to
 the core power supply.
 
-In order to build a design that uses minimal power you would need to:
+In order to build a design that uses minimal power you would, in order of importance:
 
-* Put all IO on tile 0; in paprticular I2S and I2C
+* Put all IO on tile 0; in paprticular I2S and I2C, and build with tile 0
+  for IO and XUD.
 
-* Use 1.8V IO (for example the QF60A part)
+* In the software switch off tile 1 upon booting (see powerdown.xc)
+
+* Design the core power supply so that the VDD pins of the XCORE device
+  are at 0.85V. The supported voltage range is 0.85..0.95V.
 
 * Use a DC-DC to generate 1.8V from 5V
+
+* Use 1.8V IO (for example the QF60A part)
 
 * Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very
   little, so an LDO may be an option)
 
-* Design the core power supply so that the VDD pins of the XCORE device
-  are at 0.85V. The supported voltage range is 0.85..0.95V.
+* Minimise power supply on USB suspend
 
 Conclusion
 ----------
@@ -158,6 +168,6 @@ Document History
 +==================+=============+===========================================+
 | 2024-10-15       | 2.0         | Updated to XCORE.AI                       |
 +------------------+-------------+-------------------------------------------+
-| 2016             | 1.0         | First release                             |
+| 2016-01-08       | 1.0         | First release                             |
 +------------------+-------------+-------------------------------------------+
 
