@@ -50,6 +50,8 @@
 #define MIN_FREQ           (48000)
 #endif
 
+#define AUDIO_CLASS              (1)
+
 /*** Defines relating to feature placement regarding tiles ***/
 #define XUD_TILE           (1)
 #define AUDIO_IO_TILE      (1)
