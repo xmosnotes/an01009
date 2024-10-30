@@ -20,7 +20,6 @@ def archiveSandbox(String repoName) {
     sh "cp ${WORKSPACE}/${repoName}/build/manifest.txt ${WORKSPACE}"
     sh "rm -rf .get_tools .venv"
     sh "git -C ${repoName} clean -xdf"
-    sh "cp ${WORKSPACE}/manifest.txt ${WORKSPACE}/${repoName}"
     def repoNameUpper = repoName.toUpperCase()
     zip zipFile: "${repoNameUpper}_sw.zip", archive: true, defaultExcludes: false
 }
