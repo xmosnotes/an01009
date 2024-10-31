@@ -2,7 +2,7 @@
 
 an_number: AN01009
 project: '{{an_number}}'
-title: '{{an_number}}: Optimizing USB Audio for stereo output, battery powered devices'
+title: '{{an_number}}: Optimising USB Audio for stereo output, battery powered devices'
 version: 2.0.0
 
 documentation:
@@ -21,4 +21,3 @@ documentation:
 
 software:
   cognidox_part_number: XM-015176-SM
-
