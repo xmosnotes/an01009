@@ -1,19 +1,20 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.33.0')
+@Library('xmos_jenkins_shared_library@v0.34.0')
+
+def checkout_shallow()
+{
+    checkout scm: [
+        $class: 'GitSCM',
+        branches: scm.branches,
+        userRemoteConfigs: scm.userRemoteConfigs,
+        extensions: [[$class: 'CloneOption', depth: 1, shallow: true, noTags: false]]
+    ]
+}
 
 def runningOn(machine) {
     println 'Stage running on:'
     println machine
-}
-
-def buildDocs(String repoName) {
-    withVenv {
-        sh "pip install git+ssh://git@github.com/xmos/xmosdoc@v${params.XMOSDOC_VERSION}"
-        sh 'xmosdoc'
-        def repoNameUpper = repoName.toUpperCase()
-        zip zipFile: "${repoNameUpper}_docs.zip", archive: true, dir: 'doc/_build'
-    }
 }
 
 def archiveSandbox(String repoName) {
@@ -38,7 +39,7 @@ pipeline {
       )
       string(
         name: 'XMOSDOC_VERSION',
-        defaultValue: '6.1.2',
+        defaultValue: 'v6.1.2',
         description: 'xmosdoc version'
       )
     } // parameters
@@ -51,31 +52,28 @@ pipeline {
 
     stages {
       stage('Checkout') {
-        steps{
+        steps {
           runningOn(env.NODE_NAME)
           dir(REPO_NAME) {
-            withTools(params.TOOLS_VERSION) {
-              checkout scm
-              createVenv()
-            } // tools
+            checkout_shallow()
           } // dir
         } // steps
       } // checkout
 
       stage('Code Build') {
-        steps{
-          dir(REPO_NAME) { withTools(params.TOOLS_VERSION) { withVenv {
+        steps {
+          dir(REPO_NAME) { withTools(params.TOOLS_VERSION) {
             sh "cmake -G 'Unix Makefiles' -B build -DDEPS_CLONE_SHALLOW=TRUE"
             sh 'xmake -C build'
-          } } } // venv, tools, dir
+          } } // tools, dir
         } // steps
       } // build
 
       stage('Doc Build') {
         steps {
-          dir(REPO_NAME) { withTools(params.TOOLS_VERSION) { withVenv {
-            buildDocs(REPO_NAME)
-          } } } // venv, tools, dir
+          dir(REPO_NAME) { withTools(params.TOOLS_VERSION) {
+            buildDocs()
+          } } // tools, dir
         } // steps
       } // docs
 
@@ -84,5 +82,5 @@ pipeline {
       } // archive
 
     } // stages
-    post {cleanup {cleanWs()}} // post
+    post {cleanup {xcoreCleanSandbox()}} // post
 } // pipeline
