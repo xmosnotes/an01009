@@ -4,7 +4,7 @@
 #include "xua.h"
 #include "xk_audio_316_mc_ab/board.h"
 
-/* This is the audio hardware setup file. In this case we are brining in lib_board_support and
+/* This is the audio hardware setup file. In this case we are bringing in lib_board_support and
    calling the hardware functions provided by that for the XU316 MC Audio (1v1) platform */
 
 static xk_audio_316_mc_ab_config_t board_config =
@@ -12,7 +12,7 @@ static xk_audio_316_mc_ab_config_t board_config =
     CLK_FIXED,              // clk_mode
     CODEC_MASTER,           // dac_is_clk_master
     (DEFAULT_FREQ % 22050 == 0) ? MCLK_441 : MCLK_48,     // default_mclk
-    96000,               // pll_sync_freq. Ignored in this app.
+    0,                      // pll_sync_freq. Ignored in this app.
     XUA_PCM_FORMAT,         // pcm_format, I2S in this case
     XUA_I2S_N_BITS,         // i2s_n_bits. 32b in this case
     I2S_CHANS_PER_FRAME     // i2s_chans_per_frame, 2 for I2S

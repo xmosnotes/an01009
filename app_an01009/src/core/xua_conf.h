@@ -38,7 +38,7 @@
 #define MCLK_48            (512*48000)   /* 48, 96 etc */
 #endif
 
-#define XUA_USE_SW_PLL        (0)
+#define XUA_USE_SW_PLL     (0)
 
 /* Maximum frequency device runs at */
 #ifndef MAX_FREQ
@@ -50,7 +50,7 @@
 #define MIN_FREQ           (48000)
 #endif
 
-#define AUDIO_CLASS              (2)
+#define AUDIO_CLASS        (2)
 
 #define XUA_USE_SW_PLL     (0)
 
@@ -62,8 +62,8 @@
 #define VENDOR_ID          (0x20B1) /* XMOS VID */
 #define PID_AUDIO_2        (0x0018)
 #define PID_AUDIO_1        (0x0017)
-#define PRODUCT_STR_A2     "XMOS xCORE.ai SWD (UAC2.0)"
-#define PRODUCT_STR_A1     "XMOS xCORE.ai SWD (UAC1.0)"
+#define PRODUCT_STR_A2     "XMOS xCORE.ai (UAC2.0)"
+#define PRODUCT_STR_A1     "XMOS xCORE.ai (UAC1.0)"
 
 #include "user_main.h"
 

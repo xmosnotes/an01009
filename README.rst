@@ -9,48 +9,48 @@ AN01009: Optimising USB Audio for stereo output, battery powered devices
 :scope: Example
 :description: How to reduce the power of USB audio designs
 :category: Audio
-:keywords: Audio, USB, Power consumption
+:keywords: USB, power consumption
 :hardware: XK-AUDIO-316-MC
 
 ********
 Overview
 ********
 
-This note describes the power usage of the USB Audio reference design
-and provides guidance for how to reduce the power consumption.
+This note describes the power usage of the USB Audio reference design and provides guidance for
+how to reduce the power consumption.
 
 ************
-Key Features
+Key features
 ************
 
-  * Guidance for power reduction of USB Audio designs
-  * Power measurement data comparison with selected optimisations
+ * Guidance for power reduction of USB Audio designs
+ * Power measurement data comparison with selected optimisations
 
 ************
-Known Issues
+Known issues
 ************
 
-  * None
+ * None
 
 **************
-Required Tools
+Required tools
 **************
 
-  * XMOS XTC Tools: 15.3.0
+ * XMOS XTC Tools: 15.3.0
 
 *********************************
-Required Libraries (Dependencies)
+Required libraries (dependencies)
 *********************************
 
-  * lib_xua
-  * lib_board_support
+ * `lib_xua <www.xmos.com/file/lib_xua>`_
+ * `lib_board_support <www.xmos.com/file/lib_board_support>`_
 
 *************
-Related Notes
+Related notes
 *************
 
-  * AN02022: xcore.ai Clock Frequency Control
-  * AN02023: xcore.ai Power Consumption Estimation
+ * `AN02022: xcore.ai Clock Frequency Control <www.xmos.com/file/an02022>`_
+ * `AN02023: xcore.ai Power Consumption Estimation <www.xmos.com/file/an02023>`_
 
 *******
 Support
