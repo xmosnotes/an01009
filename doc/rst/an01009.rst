@@ -2,20 +2,17 @@
 AN01009: Optimizing USB Audio for stereo output, battery powered devices
 ########################################################################
 
-This application note characterizes the expected power usage of the XMOS
-USB Audio reference design running on the XCORE.AI device, configured for
-stere- out applications. The second part of this document outlines optional
-changes to the hardware and firmware, with the goal of reducing power
-consumption and minimising power consumption.
+This application note characterises the expected power usage of the XMOS
+USB Audio reference design running on the `xcore.ai` device, configured for
+stereo-out applications. This document then outlines optional changes
+to the hardware and firmware, with the goal of reducing power consumption.
 
-This application note assumes that the design comprises a an XMOS device to
-interface an external DAC over I2S to USB. A companion application note, XXX, shows
-how power can be saved without using I2S and instead using an XMOS device
-to directly interface USB to an amplifier.
+This application note assumes that the design comprises an XMOS device to
+interface an external DAC over I²S to USB.
 
-The USB Audio reference design is optimized for performance,
+The USB Audio reference design is optimised for performance,
 configurability and low resource usage. The standard reference design
-running on the XCORE.AI comfortably fits within the USB bus power envelope
+running on the `xcore.ai` comfortably fits within the USB bus power envelope
 with plenty of power available for support components and audio CODECs.
 
 When powering systems from a battery, a fixed amount of energy is
@@ -23,56 +20,55 @@ available. Reduction of power dissipation allows the designer to increase
 battery life or keep the same battery life for a smaller battery, bringing
 cost and form factor savings. By making different design choices and
 constraining the original XMOS USB Audio reference design, various power
-optimizations can be applied to help achieve these goals.
+optimisations can be applied to help achieve these goals.
 
 This application note assumes that the reader is familiar with the
 `The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
 and the `XMOS USB Audio reference design. <https://www.xmos.com/develop/usb-multichannel-audio/>`_
 
+********
 Overview
---------
+********
 
 The power measurements have been made using the following test harness:
 
-- The XCORE.AI multi channel audio board. This board has a jumper (J24)
+- The `XK-AUDIO-316-MC` board. This board has a jumper (J24)
   over which the 5V supply to the core power supply can be monitored. Note
   that this excludes 5V supply to 3V3 and 1V8 pins.
 
-- USB Audio library ``lib_xua``. The version used was 4.0.0.
+- USB Audio library ``lib_xua``. The version used was 5.0.0.
 
-- Host Macbook Air machine running OSX version 12.7.6 (Monterey) with integrated
-  USB Audio Class drivers.
+- Host HP ProBook 430 G7 running Windows 11 23H2.
 
 A diagram of the chip power measurement method is shown below. There are
-multiple power domains within the XCORE.AI device. In this application, all
+multiple power domains within the `xcore.ai` device. In this application, all
 power originates from VBUS, and is consumed as core power (0.9V nominal),
 1.8V analog (for USB), 3.3V analog (for USB), and either 1.8 or 3.3V for
-digital IO. We are assuming that we use DC-DC converters with a reasonable
-efficiency (not LDOs).
+digital I/O. It is assumed that DC-DC converters with a reasonable
+efficiency (not LDOs) are used.
 
-We measure the core voltage power consumption in the 5V domain; we estimate
-the other supplies.
+The core voltage power consumption in the 5V domain is measured; the power
+consumption of the other supplies is estimated.
 
 .. figure:: ../images/power-setup.*
             :width: 50%
 
             Test setup
 
-For each configuration, basic enumeration and playback was tested on OSX,
+For each configuration, basic enumeration and playback was tested on Windows,
 and power when playing audio was measured.
 
-Power measurement and optimizations 
------------------------------------
+*************
+Optimisations
+*************
 
-A number of different optimizations were applied to the reference design and their
-impact was measured. These optimizations can be grouped into categories.
+A number of different optimisations were applied to the reference design and their
+impact was measured. These optimisations can be grouped into categories.
  
-* Reduce the clock frequency to 500 MHz from the standard 600 Mhz.
-  It can even go down to 400 MHz?
-
-* Move all the software to one physical core, Slow the switch down, and
-  slow the other core down. On the hardware that we use for measuring power
-  this is awkward as the I2S and I2C are connected to two separate physical
+* Move all the software to one physical core. Then the switch and other core can
+  both be slowed down. In this case, the frequency of core 0 is reduced to 9 MHz.
+  On the hardware that is used for measuring power this is suboptimal as the
+  I²S and I²C are connected to two separate physical
   cores. An extra 3 mW can be saved by switching the other core off rather
   than just slowing it down.
 
@@ -80,110 +76,144 @@ impact was measured. These optimizations can be grouped into categories.
   rather than the middle of the allowed range (0.9V)
   
 * Reference design feature reduction. Reduction of power by lowering the
-  audio sample frequency to 48kHz and use of full speed USB Audio Class 1
+  audio sample frequency to 48 kHz and use of full speed USB Audio Class 1
   and full speed USB.
 
 The latter is important as it affects the non-core power consumed.
-We compute IO power to be as follows (note these have not yet been measured):
+
+Implementation
+==============
+
+Source file ``src/extensions/power_down.xc`` contains a function which is run on
+application startup to reduce the power consumption. It waits for ten seconds to
+allow the application to start running and then it applies the optimisations.
+
+The following clock divider reduces the System PLL frequency of 600 MHz to 120 MHz
+for the switch:
+
+.. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
+   :start-after: Reduce switch clock frequency
+   :end-at: write_node_config_reg
+
+The following clock divider reduces the System PLL frequency of 600 MHz to 9 MHz
+for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register:
+
+.. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
+   :start-after: Reduce core 0 clock frequency
+   :end-at: setps
+
+Driving a value of 1 on the ``p_margin`` port reduces the core voltage to 0.85V:
+
+.. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
+   :start-after: Reduce core voltage to 0.85V
+   :end-at: asm volatile
+
+The p_margin port is defined for the `XK-AUDIO-316-MC` board by code in ``lib_board_support``.
+
+These optimisations can be enabled or disabled as required to test the power consumption
+by adding or removing them in the ``power_down`` function.
+
+Changing to USB Audio Class 1 is achieved by setting the ``AUDIO_CLASS`` define in
+``src/core/xua_conf.h`` to the value ``1``.
+
+******************
+Power measurements
+******************
+
+I/O power
+=========
+
+I/O power is calculated to be as follows (note these have not yet been measured):
 
 .. tabularcolumns:: lrr
 
 ========================= ======================= ======================
-Current                   FSRX (12 MBps)          HSRX (480 mbit/s)
+Current                   FSRX (12 Mbit/s)        HSRX (480 Mbit/s)
 ========================= ======================= ======================
 IVCC33A                   11-40 uA (negligible)   1 mA (3 mW)
 IVCC18A                   4-5 mA (7-9 mW)         30-36 mA (54-65 mW)
 Oscillator, 1.8V CHECK    0.5 mW                  0.5 mW
-I2S power                 0.5 mw                  0.5 mw
+I²S power                 0.5 mw                  0.5 mw
 DC-DC efficiency          90%                     90%
 **Total**                 **11 mW**               **77 mW**
 ========================= ======================= ======================
 
-The table below shows the measured core power consumption of XCORE.AI USB Audio
-reference design with different settings for sample rate, USB Audio class,
-clock rates, and core voltage. We then add the calculated I/O power and a
-total power
+Comparison of optimisations
+===========================
+
+The tables below show the measured core power consumption of the `xcore.ai` USB Audio
+reference design with different optimisations. The calculated I/O power is added to get
+the total power consumption value.
+
+The Configuration column lists the core 0 and core 1 clock frequencies, followed by the
+core voltage.
+
+USB Audio Class 2.0 at 192 kHz
+------------------------------
 
 .. tabularcolumns:: lrrr
 
-================================== =========== ========== ========
-Configuration                      Core Power  I/O Power  Total  
-================================== =========== ========== ========
-UAC2 48KHz, 600/600 MHz             244 mW       77 mW     321 mW
-UAC2 48KHz, 500/500 MHz             209 mW       77 mW     288 mW
-UAC2 48KHz, 500/10 MHz              163 mW       77 mW     240 mW
-UAC2 48KHz, 500/10 MHz, 0.85V       145 mW       77 mW     222 mW
-UAC2 192KHz, 500/10 MHz, 0.85V      146 mW       77 mW     223 mW
-UAC1 48KHz, 500/10 MHz, 0.85V       145 mW       11 mW     156 mW
-UAC1 48KHz, 500/10 MHz, 0.85V, NF   113 mW       11 mW     125 mW
-UAC1 48KHz, 500/10 MHz, 0.85V, NS    90 mW       11 mW     101 mW
-UAC1 96KHz, 500/10 MHz, 0.85V, NS    91 mW       11 mW     102 mW
-UAC1 96KHz, 500/10 MHz, 0.85V, NT    68 mW       11 mW      79 mW
-UAC2 192KHz, 500/10 MHz, 0.85V, NT   72 mW       77 mW     149 mW
-================================== =========== ========== ========
+==================== =========== ========== ========
+Configuration        Core Power  I/O Power  Total
+==================== =========== ========== ========
+600/600 MHz, 0.90V    220 mW       77 mW     297 mW
+  9/600 MHz  0.90V    162 mW       77 mW     239 mW
+  9/600 MHz, 0.85V    147 mW       77 mW     224 mW
+==================== =========== ========== ========
 
-The last five cases do some things that are not necessarily legal or
-supported, but experiments in changing the code base to remove some polling
-behaviour:
+USB Audio Class 1.0 at 48 kHz
+-----------------------------
 
-* NF, switches fast mode in the IO loop off (!)
+.. tabularcolumns:: lrrr
 
-* NS, includes NF and removes the default case in the select statement in
-  ``XUA_Buffer_Ep()`` (PR #436 in lib_xua)
+==================== =========== ========== ========
+Configuration        Core Power  I/O Power  Total
+==================== =========== ========== ========
+600/600 MHz  0.90V    216 mW       11 mW     227 mW
+  9/600 MHz  0.90V    163 mW       11 mW     174 mW
+  9/600 MHz, 0.85V    143 mW       11 mW     154 mW
+==================== =========== ========== ========
 
-* NT, includes NS/NF and adds a short 1 us sleep in ``XUA_Buffer_Decouple()``
-
+**************************************
 Hardware for Minimal Power Consumption
---------------------------------------
+**************************************
 
-This application measured the power on an XK-AUDIO-316-MC-AB board, as that
-is commercially available nad has a 0.1 ohm resistor across the 5V input to
+This application measured the power on an `XK-AUDIO-316-MC` board, as that
+is commercially available and has a 0.1 ohm resistor across the 5V input to
 the core power supply.
 
 In order to build a design that uses minimal power you would, in order of importance:
 
-* Put all IO on tile 0; in paprticular I2S and I2C, and build with tile 0
-  for IO and XUD.
+* Put all I/O on tile 0; in particular I²S and I²C, and build with tile 0
+  for I/O and XUD.
 
-* In the software switch off tile 1 upon booting (see powerdown.xc)
+* In the software switch off tile 1 upon booting (see ``power_down.xc``)
 
 * Design the core power supply so that the VDD pins of the XCORE device
   are at 0.85V. The supported voltage range is 0.85..0.95V.
 
 * Use a DC-DC to generate 1.8V from 5V
 
-* Use 1.8V IO (for example the QF60A part)
+* Use 1.8V I/O (for example the QF60A part)
 
 * Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very
   little, so an LDO may be an option)
 
 * Minimise power supply on USB suspend
 
+**********
 Conclusion
-----------
+**********
 
-This application note shows how some simple design optimizations can be made to reduce
-overall power consumption by close to 2x, compared with the baseline reference design.
+This application note shows how some simple design optimisations can be made to reduce
+overall power consumption by 25% compared with the baseline reference design.
 
+*******************
 Further Information
--------------------
+*******************
 
 * `xcore.ai Power Consumption Estimation <http://www.xmos.com/?s=XM-014234-AN>`_
 
 * `XU316-1024-QF60A datasheet <https://www.xmos.com/?s=XM-014034-PC>`_
 
 * `The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
-
-|newpage|
-
-Document History
-----------------
-
-+------------------+-------------+-------------------------------------------+
-| **Date**         | **Release** | **Comment**                               |
-+==================+=============+===========================================+
-| 2024-10-15       | 2.0         | Updated to XCORE.AI                       |
-+------------------+-------------+-------------------------------------------+
-| 2016-01-08       | 1.0         | First release                             |
-+------------------+-------------+-------------------------------------------+
-
