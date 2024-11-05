@@ -38,8 +38,6 @@
 #define MCLK_48            (512*48000)   /* 48, 96 etc */
 #endif
 
-#define XUA_USE_SW_PLL     (0)
-
 /* Maximum frequency device runs at */
 #ifndef MAX_FREQ
 #define MAX_FREQ           (192000)

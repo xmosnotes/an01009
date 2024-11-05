@@ -1,5 +1,5 @@
 ########################################################################
-AN01009: Optimizing USB Audio for stereo output, battery powered devices
+AN01009: Optimising USB Audio for stereo output, battery powered devices
 ########################################################################
 
 This application note characterises the expected power usage of the XMOS
