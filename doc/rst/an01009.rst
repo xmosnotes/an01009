@@ -67,6 +67,45 @@ consumption of the other supplies is estimated.
 For each configuration, basic enumeration and playback was tested on Windows,
 and power when playing audio was measured.
 
+*******************
+Example application
+*******************
+
+
+An accompanying example application (``app_an01009``) is provided along side this application note.
+
+Building the example
+====================
+
+The application uses the `xcommon-cmake <https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest>`_,
+the `XMOS` build and dependency management system. `xcommon-cmake` is bundled with the XTC tools.
+
+The ``an01009`` software zip-file should be downloaded and unzipped to a chosen directory.
+
+To configure the build run the following from an XTC command prompt::
+
+    cd an01009
+    cd app_an01009
+    cmake -G "Unix Makefiles" -B build
+
+All required dependencies are included in the software download, however, if any are missing it is
+at this configure step that they will be downloaded by the build system.
+
+Finally, the application binary can be built using ``xmake``::
+
+    xmake -j -C build
+
+This command will cause a binary (.xe) to be generated in the `app_an01009/bin` directory,
+
+Launching the example
+=====================
+
+From a XTC command prompt run the following command::
+
+    xrun bin/app_an02003.xe
+
+Once this command has executed the device should have enumerated on the host machine.
+
 *************
 Optimisations
 *************
