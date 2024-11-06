@@ -8,7 +8,7 @@ stereo-out applications. This document then outlines optional changes
 to the hardware and firmware, with the goal of reducing power consumption.
 
 This application note assumes that the design comprises an XMOS device to
-interface an external DAC over I²S to USB.
+interface to an external DAC over I²S to USB.
 
 The USB Audio reference design is optimised for performance,
 configurability and low resource usage. The standard reference design
@@ -28,7 +28,7 @@ and the `XMOS USB Audio reference design. <https://www.xmos.com/develop/usb-mult
 
 .. warning::
 
-    This application note describes steps for reducing power and on a `XK-AUDIO-316-MC`
+    Whilst application note describes steps for reducing power and on a `XK-AUDIO-316-MC`
     board since it is readily and commercially available. However, this hardware arrangement of this
     board does not lend itself to an ideal low power configuration. Compromises made and details of
     an ideal configuration are detailed in this document.
@@ -185,7 +185,7 @@ Current                   FSRX (12 Mbit/s)        HSRX (480 Mbit/s)
 ========================= ======================= ======================
 IVCC33A                   11-40 uA (negligible)   1 mA (3 mW)
 IVCC18A                   4-5 mA (7-9 mW)         30-36 mA (54-65 mW)
-Oscillator, 1.8V          0.5 mW                  0.5 mW
+Oscillator, 1.8V          1 mW                    1 mW
 I²S power                 0.5 mw                  0.5 mw
 DC-DC efficiency          90%                     90%
 **Total**                 **11 mW**               **77 mW**
@@ -194,8 +194,8 @@ DC-DC efficiency          90%                     90%
 Comparison of optimisations
 ===========================
 
-The tables below show the measured core power consumption of the `xcore.ai` USB Audio
-reference design with different optimisations. The calculated I/O power is added to get
+The tables below show the measured core power consumption of `xcore.ai` running USB Audio
+reference design software with different optimisations. The calculated I/O power is added to get
 the total power consumption value.
 
 The `Configuration` column lists the core 0 and core 1 clock frequencies, followed by the
