@@ -102,7 +102,7 @@ Launching the example
 
 From a XTC command prompt run the following command::
 
-    xrun bin/app_an02003.xe
+    xrun bin/app_an01009.xe
 
 Once this command has executed the device should have enumerated on the host machine.
 
