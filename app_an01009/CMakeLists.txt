@@ -5,7 +5,7 @@ project(app_an01009)
 set(APP_HW_TARGET xk-audio-316-mc-tile1.xn)
 
 # Use sw_usb_audio deps and add lib_awe
-set(APP_DEPENDENT_MODULES "lib_xua"
+set(APP_DEPENDENT_MODULES "lib_xua(5.0.0)"
                           "lib_board_support(1.1.0)"
                           )
 
