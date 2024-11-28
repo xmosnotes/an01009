@@ -184,11 +184,11 @@ and high-speed operation:
 Current                   FSRX (12 Mbit/s)        HSRX (480 Mbit/s)
 ========================= ======================= ======================
 IVCC33A                   11-40 uA (negligible)   1 mA (3 mW)
-IVCC18A                   4-5 mA (7-9 mW)         30-36 mA (54-65 mW)
+IVCC18A                   4-5 mA (7-9 mW)         8 mA (14 mW)
 Oscillator, 1.8V          1 mW                    1 mW
 I²S power                 0.5 mw                  0.5 mw
 DC-DC efficiency          90%                     90%
-**Total**                 **11 mW**               **77 mW**
+**Total**                 **11 mW**               **22 mW**
 ========================= ======================= ======================
 
 Comparison of optimisations
@@ -201,11 +201,6 @@ the total power consumption value.
 The `Configuration` column lists the core 0 and core 1 clock frequencies, followed by the
 core voltage.
 
-.. note::
-
-   This application note makes the arbitrary choice to run in UAC1.0 mode when operating at
-   full-speed. UAC2.0 vs UAC1.0 will have negligible effect on power, it is the bus-speed
-   and sample rate change the elicits power reduction.
 
 High-speed USB Audio Class 2.0 at 192 kHz
 -----------------------------------------
@@ -215,12 +210,12 @@ High-speed USB Audio Class 2.0 at 192 kHz
 ==================== =========== ========== ========
 Configuration        Core Power  I/O Power  Total
 ==================== =========== ========== ========
-600/600 MHz, 0.90V    220 mW       77 mW     297 mW
-  9/600 MHz  0.90V    162 mW       77 mW     239 mW
-  9/600 MHz, 0.85V    147 mW       77 mW     224 mW
+600/600 MHz, 0.90V    220 mW       22 mW     242 mW
+  9/600 MHz  0.90V    162 mW       22 mW     184 mW
+  9/600 MHz, 0.85V    147 mW       22 mW     169 mW
 ==================== =========== ========== ========
 
-Full-speed USB Audio Class 1.0 at 48 kHz
+Full-speed USB Audio Class 2.0 at 48 kHz
 ----------------------------------------
 
 .. tabularcolumns:: lrrr
