@@ -122,6 +122,10 @@ impact was measured. These optimisations can be grouped into categories.
 * Reduce the core voltage to the bottom of the allowed range (0.85V) rather than the middle of the
   allowed range (0.9V)
 
+* Disable fast mode in ``XUD_Manager_loop`` by removing the calls to ``set_thread_fast_mode_on``
+  and ``set_thread_fast_mode_off``. Then run the XUD thread in high priority mode by adding
+  ``-DXUD_PRIORITY_HIGH`` to the ``APP_COMPILER_FLAGS`` in the ``CMakeLists.txt`` file.
+
 * Reduction of power by lowering the audio sample frequency to 48 kHz and use of full speed USB
   rather than high-speed.
 
@@ -207,26 +211,30 @@ High-speed USB Audio Class 2.0 at 192 kHz
 
 .. tabularcolumns:: lrrr
 
-==================== =========== ========== ========
-Configuration        Core Power  I/O Power  Total
-==================== =========== ========== ========
-600/600 MHz, 0.90V    220 mW       22 mW     242 mW
-  9/600 MHz  0.90V    162 mW       22 mW     184 mW
-  9/600 MHz, 0.85V    147 mW       22 mW     169 mW
-==================== =========== ========== ========
+======================= =========== ========== ========
+Configuration           Core Power  I/O Power  Total
+======================= =========== ========== ========
+600/600 MHz, 0.90V       220 mW       22 mW     242 mW
+  9/600 MHz, 0.90V       162 mW       22 mW     184 mW
+  9/600 MHz, 0.90V, HP   118 mW       22 mW     140 mW
+  9/600 MHz, 0.85V       147 mW       22 mW     169 mW
+  9/600 MHz, 0.85V, HP   106 mW       22 mW     128 mW
+======================= =========== ========== ========
 
 Full-speed USB Audio Class 2.0 at 48 kHz
 ----------------------------------------
 
 .. tabularcolumns:: lrrr
 
-==================== =========== ========== ========
-Configuration        Core Power  I/O Power  Total
-==================== =========== ========== ========
-600/600 MHz  0.90V    216 mW       11 mW     227 mW
-  9/600 MHz  0.90V    163 mW       11 mW     174 mW
-  9/600 MHz, 0.85V    143 mW       11 mW     154 mW
-==================== =========== ========== ========
+======================= =========== ========== ========
+Configuration           Core Power  I/O Power  Total
+======================= =========== ========== ========
+600/600 MHz, 0.90V       216 mW       11 mW     227 mW
+  9/600 MHz, 0.90V       163 mW       11 mW     174 mW
+  9/600 MHz, 0.90V, HP   119 mW       11 mW     130 mW
+  9/600 MHz, 0.85V       143 mW       11 mW     154 mW
+  9/600 MHz, 0.85V, HP   107 mW       11 mW     118 mW
+======================= =========== ========== ========
 
 **************************************
 Hardware for minimal power consumption
