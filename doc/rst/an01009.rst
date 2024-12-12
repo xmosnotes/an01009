@@ -152,12 +152,6 @@ for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register
    :start-after: Reduce core 0 clock frequency
    :end-at: setps
 
-Driving a value of 1 on the ``p_margin`` port reduces the core voltage to 0.85V:
-
-.. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
-   :start-after: Reduce core voltage to 0.85V
-   :end-at: asm volatile
-
 The p_margin port is defined for the `XK-AUDIO-316-MC` board by code in ``lib_board_support``.
 
 These optimisations can be enabled or disabled as required to test the power consumption
@@ -217,8 +211,6 @@ Configuration           Core Power  I/O Power  Total
 600/600 MHz, 0.90V       220 mW       22 mW     242 mW
   9/600 MHz, 0.90V       162 mW       22 mW     184 mW
   9/600 MHz, 0.90V, HP   118 mW       22 mW     140 mW
-  9/600 MHz, 0.85V       147 mW       22 mW     169 mW
-  9/600 MHz, 0.85V, HP   106 mW       22 mW     128 mW
 ======================= =========== ========== ========
 
 Full-speed USB Audio Class 2.0 at 48 kHz
@@ -232,8 +224,6 @@ Configuration           Core Power  I/O Power  Total
 600/600 MHz, 0.90V       216 mW       11 mW     227 mW
   9/600 MHz, 0.90V       163 mW       11 mW     174 mW
   9/600 MHz, 0.90V, HP   119 mW       11 mW     130 mW
-  9/600 MHz, 0.85V       143 mW       11 mW     154 mW
-  9/600 MHz, 0.85V, HP   107 mW       11 mW     118 mW
 ======================= =========== ========== ========
 
 **************************************
@@ -250,15 +240,12 @@ importance:
 
 * In the software switch off tile 1 upon booting (see ``power_down.xc``).
 
-* Design the core power supply so that the VDD pins of the `xcore` device are at 0.85V. The
-  supported voltage range is 0.85..0.95V.
-
 * Use a DC-DC converter to generate 1.8V from 5V
 
 * Use 1.8V I/O (for example the `QF60A` part)
 
 * Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very little, so an LDO may
-  be an option)
+  be more efficient)
 
 * Minimise power supply on USB suspend
 
