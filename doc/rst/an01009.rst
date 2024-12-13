@@ -119,9 +119,6 @@ impact was measured. These optimisations can be grouped into categories.
   buses are connected to two separate physical tiles. An extra 3 mW can be saved by switching the
   other tile off rather than just slowing it down.
 
-* Reduce the core voltage to the bottom of the allowed range (0.85V) rather than the middle of the
-  allowed range (0.9V)
-
 * Disable fast mode in ``XUD_Manager_loop`` and instead run the XUD thread in high priority mode.
 
   #. In ``lib_xud/lib_xud/src/core/XUD_Main.xc``:
@@ -159,8 +156,6 @@ for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register
 .. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
    :start-after: Reduce core 0 clock frequency
    :end-at: setps
-
-The p_margin port is defined for the `XK-AUDIO-316-MC` board by code in ``lib_board_support``.
 
 These optimisations can be enabled or disabled as required to test the power consumption
 by adding or removing them in the ``power_down`` function.
