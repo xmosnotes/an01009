@@ -63,7 +63,9 @@ pipeline {
         stage('Doc build') {
             steps {
                 dir(REPO_NAME) {
-                    buildDocs()
+                    createVenv()
+                    // Force Python doc build as docker-based xmosdoc can't access lib_xud in sandbox
+                    buildDocs(xmosdocVenvPath: "${REPO_NAME}")
                 }
             }
         }

@@ -119,8 +119,17 @@ impact was measured. These optimisations can be grouped into categories.
   buses are connected to two separate physical tiles. An extra 3 mW can be saved by switching the
   other tile off rather than just slowing it down.
 
-* Reduce the core voltage to the bottom of the allowed range (0.85V) rather than the middle of the
-  allowed range (0.9V)
+* Disable fast mode in ``XUD_Manager_loop`` and instead run the XUD thread in high priority mode.
+
+  #. In ``lib_xud/lib_xud/src/core/XUD_Main.xc``:
+
+     .. literalinclude:: ../../../lib_xud/lib_xud/src/core/XUD_Main.xc
+        :start-at: set_thread_fast_mode_on
+        :end-at: set_thread_fast_mode_off
+
+     remove the calls to both ``set_thread_fast_mode_on`` and ``set_thread_fast_mode_off``.
+
+  #. Add ``-DXUD_PRIORITY_HIGH`` to the ``APP_COMPILER_FLAGS`` in the ``CMakeLists.txt`` file.
 
 * Reduction of power by lowering the audio sample frequency to 48 kHz and use of full speed USB
   rather than high-speed.
@@ -147,14 +156,6 @@ for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register
 .. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
    :start-after: Reduce core 0 clock frequency
    :end-at: setps
-
-Driving a value of 1 on the ``p_margin`` port reduces the core voltage to 0.85V:
-
-.. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
-   :start-after: Reduce core voltage to 0.85V
-   :end-at: asm volatile
-
-The p_margin port is defined for the `XK-AUDIO-316-MC` board by code in ``lib_board_support``.
 
 These optimisations can be enabled or disabled as required to test the power consumption
 by adding or removing them in the ``power_down`` function.
@@ -207,26 +208,26 @@ High-speed USB Audio Class 2.0 at 192 kHz
 
 .. tabularcolumns:: lrrr
 
-==================== =========== ========== ========
-Configuration        Core Power  I/O Power  Total
-==================== =========== ========== ========
-600/600 MHz, 0.90V    220 mW       22 mW     242 mW
-  9/600 MHz  0.90V    162 mW       22 mW     184 mW
-  9/600 MHz, 0.85V    147 mW       22 mW     169 mW
-==================== =========== ========== ========
+======================= =========== ========== ========
+Configuration           Core Power  I/O Power  Total
+======================= =========== ========== ========
+600/600 MHz, 0.90V       220 mW       22 mW     242 mW
+  9/600 MHz, 0.90V       162 mW       22 mW     184 mW
+  9/600 MHz, 0.90V, HP   118 mW       22 mW     140 mW
+======================= =========== ========== ========
 
 Full-speed USB Audio Class 2.0 at 48 kHz
 ----------------------------------------
 
 .. tabularcolumns:: lrrr
 
-==================== =========== ========== ========
-Configuration        Core Power  I/O Power  Total
-==================== =========== ========== ========
-600/600 MHz  0.90V    216 mW       11 mW     227 mW
-  9/600 MHz  0.90V    163 mW       11 mW     174 mW
-  9/600 MHz, 0.85V    143 mW       11 mW     154 mW
-==================== =========== ========== ========
+======================= =========== ========== ========
+Configuration           Core Power  I/O Power  Total
+======================= =========== ========== ========
+600/600 MHz, 0.90V       216 mW       11 mW     227 mW
+  9/600 MHz, 0.90V       163 mW       11 mW     174 mW
+  9/600 MHz, 0.90V, HP   119 mW       11 mW     130 mW
+======================= =========== ========== ========
 
 **************************************
 Hardware for minimal power consumption
@@ -242,15 +243,12 @@ importance:
 
 * In the software switch off tile 1 upon booting (see ``power_down.xc``).
 
-* Design the core power supply so that the VDD pins of the `xcore` device are at 0.85V. The
-  supported voltage range is 0.85..0.95V.
-
 * Use a DC-DC converter to generate 1.8V from 5V
 
 * Use 1.8V I/O (for example the `QF60A` part)
 
 * Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very little, so an LDO may
-  be an option)
+  be more efficient)
 
 * Minimise power supply on USB suspend
 
