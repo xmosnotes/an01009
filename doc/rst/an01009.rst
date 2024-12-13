@@ -25,9 +25,13 @@ This application note assumes that the reader is familiar with the
 `The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
 and the `XMOS USB Audio reference design. <https://www.xmos.com/develop/usb-multichannel-audio/>`_
 
+The described and provided application executes on the `XK-AUDIO-316-MC` board. This note concerns
+itself with reducing the power consumption of the `xcore.ai` device only, not whole board power
+reductions.
+
 .. warning::
 
-    Whilst application note describes steps for reducing power and on a `XK-AUDIO-316-MC`
+    Whilst application note describes steps for reducing power on a `XK-AUDIO-316-MC`
     board since it is readily and commercially available. However, this hardware arrangement of this
     board does not lend itself to an ideal low power configuration. Compromises made and details of
     an ideal configuration are detailed in this document.
@@ -268,7 +272,7 @@ importance:
 
 * Put all I/O on tile 0; in particular I²S and I²C, and build with tile 0 for I/O and ``lib_xud``.
 
-* In the software switch off tile 1 upon booting (see ``power_down.xc``).
+* In the software switch off tile 1 upon booting (see ``power_down.xc``) [#f2]_.
 
 * Use a DC-DC converter to generate 1.8V from 5V
 
@@ -278,6 +282,9 @@ importance:
   be more efficient)
 
 * Minimise power supply on USB suspend
+
+.. [#f2] Note this does *not* effect the secondary PLL output pin muxed with IO pin `X1D11` of
+   tile[1]
 
 **********
 Conclusion
