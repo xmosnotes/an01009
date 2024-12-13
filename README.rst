@@ -9,22 +9,22 @@ AN01009: Optimising USB Audio for stereo output, battery powered devices
 :scope: Example
 :description: How to reduce the power of USB audio designs
 :category: Audio
-:keywords: USB, power consumption
+:keywords: USB Audio, power
 :hardware: XK-AUDIO-316-MC
 
 ********
 Overview
 ********
 
-This note describes the power usage of the USB Audio reference design and provides guidance for
-how to reduce the power consumption.
+This note describes the power usage of the USB Audio reference design and provides guidance on how
+to reduce its power consumption.
 
 ************
 Key features
 ************
 
- * Guidance for power reduction of USB Audio designs
- * Power measurement data comparison with selected optimisations
+ * Guidance on reducing power consumption in USB Audio designs
+ * Power measurement data comparing selected optimisations
 
 ************
 Known issues
@@ -56,4 +56,5 @@ Related notes
 Support
 *******
 
-This package is supported by XMOS Ltd. Issues can be raised against the software at: http://www.xmos.com/support
+This package is supported by XMOS Ltd. Issues can be raised against the software at
+`http://www.xmos.com/support <http://www.xmos.com/support>`_
