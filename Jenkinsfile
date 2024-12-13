@@ -1,21 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.34.0')
-
-def checkout_shallow()
-{
-    checkout scm: [
-        $class: 'GitSCM',
-        branches: scm.branches,
-        userRemoteConfigs: scm.userRemoteConfigs,
-        extensions: [[$class: 'CloneOption', depth: 1, shallow: true, noTags: false]]
-    ]
-}
-
-def runningOn(machine) {
-    println 'Stage running on:'
-    println machine
-}
+@Library('xmos_jenkins_shared_library@v0.36.0')
 
 def archiveSandbox(String repoName) {
     sh "cp ${WORKSPACE}/${repoName}/build/manifest.txt ${WORKSPACE}"
@@ -27,60 +12,75 @@ def archiveSandbox(String repoName) {
 
 getApproval()
 pipeline {
-    agent {label 'documentation'}
-    environment {
-      REPO_NAME = 'an01009'
+    agent {
+        label 'documentation'
     }
     parameters {
-      string(
-        name: 'TOOLS_VERSION',
-        defaultValue: '15.3.0',
-        description: 'XTC tools version'
-      )
-      string(
-        name: 'XMOSDOC_VERSION',
-        defaultValue: 'v6.1.2',
-        description: 'xmosdoc version'
-      )
-    } // parameters
+        string(
+            name: 'TOOLS_VERSION',
+            defaultValue: '15.3.0',
+            description: 'XTC tools version'
+        )
+        string(
+            name: 'XMOSDOC_VERSION',
+            defaultValue: 'v6.2.0',
+            description: 'xmosdoc version'
+        )
+    }
 
     options {
         skipDefaultCheckout()
         timestamps()
         buildDiscarder(xmosDiscardBuildSettings(onlyArtifacts = false))
-    } // options
+    }
 
     stages {
-      stage('Checkout') {
-        steps {
-          runningOn(env.NODE_NAME)
-          dir(REPO_NAME) {
-            checkout_shallow()
-          } // dir
-        } // steps
-      } // checkout
+        stage('Checkout') {
+            steps{
 
-      stage('Code Build') {
-        steps {
-          dir(REPO_NAME) { withTools(params.TOOLS_VERSION) {
-            sh "cmake -G 'Unix Makefiles' -B build -DDEPS_CLONE_SHALLOW=TRUE"
-            sh 'xmake -C build'
-          } } // tools, dir
-        } // steps
-      } // build
+                println "Stage running on ${env.NODE_NAME}"
 
-      stage('Doc Build') {
-        steps {
-          dir(REPO_NAME) { withTools(params.TOOLS_VERSION) {
-            buildDocs()
-          } } // tools, dir
-        } // steps
-      } // docs
+                script {
+                    def (server, user, repo) = extractFromScmUrl()
+                    env.REPO_NAME = repo
+                }
 
-      stage("Archive Sandbox") {
-        steps {archiveSandbox(REPO_NAME)} // steps
-      } // archive
+                dir(REPO_NAME)
+                {
+                    checkoutScmShallow()
+                }
+            }
+        }
+
+        stage('Code build') {
+            steps{
+                dir(REPO_NAME) {
+                    xcoreBuild()
+                }
+            }
+        }
+
+        stage('Doc build') {
+            steps {
+                dir(REPO_NAME) {
+                    buildDocs()
+                }
+            }
+        }
+
+        stage("Archive sandbox") {
+            steps
+            {
+                archiveSandbox(REPO_NAME)
+            }
+        }
 
     } // stages
-    post {cleanup {xcoreCleanSandbox()}} // post
+    post
+    {
+        cleanup
+        {
+             xcoreCleanSandbox()
+        }
+    }
 } // pipeline
