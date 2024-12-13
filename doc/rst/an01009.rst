@@ -3,24 +3,23 @@ AN01009: Optimising USB Audio for stereo output, battery powered devices
 ########################################################################
 
 This application note characterises the expected power usage of the XMOS
-USB Audio reference design running on the `xcore.ai` device, configured for
+USB Audio reference design running on an `xcore.ai` device, configured for
 stereo-out applications. This document then outlines optional changes
-to the hardware and firmware, with the goal of reducing power consumption.
+to the hardware and software, with the goal of reducing power consumption.
 
-This application note assumes that the design comprises an XMOS device to
+This application note assumes that the design comprises an `XMOS` device to
 interface to an external DAC over I²S to USB.
 
-The USB Audio reference design is optimised for performance,
-configurability and low resource usage. The standard reference design
-running on the `xcore.ai` comfortably fits within the USB bus power envelope
-with plenty of power available for support components and audio CODECs.
+The USB Audio reference design is optimised for performance, configurability,
+and low resource usage. The standard reference design
+running on the `xcore.ai` device comfortably fits within the USB bus power envelope,
+leaving plenty of power available for supporting components and audio CODECs.
 
-When powering systems from a battery, a fixed amount of energy is
-available. Reduction of power dissipation allows the designer to increase
-battery life or keep the same battery life for a smaller battery, bringing
-cost and form factor savings. By making different design choices and
-constraining the original XMOS USB Audio reference design, various power
-optimisations can be applied to help achieve these goals.
+When powering systems from a battery, a fixed amount of energy is available.
+Reducing power dissipation allows the designer to either increase battery life or maintain the same
+battery life with a smaller battery, resulting in cost and form factor savings.
+By making different design choices and optimising the original `XMOS` USB Audio reference design,
+various power-saving techniques can be applied to achieve these goals
 
 This application note assumes that the reader is familiar with the
 `The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
@@ -47,9 +46,9 @@ The power measurements have been made using the following test harness:
 
 - Host: HP ProBook 430 G7 running Windows 11 23H2.
 
-A diagram of the chip power measurement method is in :numref:`fig_power_setup`. There are
+A diagram of the chip power measurement method is shown :numref:`fig_power_setup`. There are
 multiple power domains within the `xcore.ai` device. In this application, all
-power originates from VBUS, and is consumed as core power (0.9V nominal),
+power originates from USB `VBUS`, and is consumed as core power (0.9V nominal),
 1.8V analog (for USB), 3.3V analog (for USB), and either 1.8 or 3.3V for
 digital I/O. It is assumed that DC-DC converters with a reasonable
 efficiency (not LDOs) are used.
@@ -64,13 +63,14 @@ consumption of the other supplies is estimated.
 
             Test setup
 
-For each configuration, basic enumeration and playback was tested on Windows,
-and power when playing audio was measured.
+For each configuration, basic enumeration and playback was confirmed on Windows,
+with power being easured during audio playback.
+
+
 
 *******************
 Example application
 *******************
-
 
 An accompanying example application (``app_an01009``) is provided along side this application note.
 
@@ -106,6 +106,8 @@ From a XTC command prompt run the following command::
 
 Once this command has executed the device should have enumerated on the host machine.
 
+.. _sec_optimisations:
+
 *************
 Optimisations
 *************
@@ -113,33 +115,29 @@ Optimisations
 A number of different optimisations were applied to the reference design and their
 impact was measured. These optimisations can be grouped into categories.
 
-* Execute all the software to one physical tile. Then the `xcore` switch and other tile can both be
-  slowed down. In this case, the frequency of core 0 is reduced to 9 MHz.
+* **Reducing frequencies** Execute all the software to one physical tile.
+  The `xcore` switch and other tile can both be slowed down. In this case, the frequency of core 0
+  is reduced to 9 MHz.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
   buses are connected to two separate physical tiles. An extra 3 mW can be saved by switching the
   other tile off rather than just slowing it down.
 
-* Disable fast mode in ``XUD_Manager_loop`` and instead run the XUD thread in high priority mode.
+* **XUD thread mode**  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
+  `HIGH PRIORITY` mode.
 
-  #. In ``lib_xud/lib_xud/src/core/XUD_Main.xc``:
+* **Using full-speed USB** Reduction of power by lowering the audio sample frequency to 48 kHz and use of full speed USB
+  rather than high-speed. The latter is important as it affects the non-core power consumed.
 
-     .. literalinclude:: ../../../lib_xud/lib_xud/src/core/XUD_Main.xc
-        :start-at: set_thread_fast_mode_on
-        :end-at: set_thread_fast_mode_off
-
-     remove the calls to both ``set_thread_fast_mode_on`` and ``set_thread_fast_mode_off``.
-
-  #. Add ``-DXUD_PRIORITY_HIGH`` to the ``APP_COMPILER_FLAGS`` in the ``CMakeLists.txt`` file.
-
-* Reduction of power by lowering the audio sample frequency to 48 kHz and use of full speed USB
-  rather than high-speed.
-
-The latter is important as it affects the non-core power consumed.
-
+**************
 Implementation
-==============
+**************
 
-The source file ``src/extensions/power_down.xc`` contains a function which is run on
+This section describes the steps taken to implement the changes outlined in :ref:`sec_optimisations`.
+
+Reducing frequencies
+====================
+
+The provided source file ``src/extensions/power_down.xc`` contains a function which is run on
 application startup to reduce the power consumption. It waits for ten seconds to
 allow the application to start running and then it applies the optimisations.
 
@@ -158,16 +156,42 @@ for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register
    :end-at: setps
 
 These optimisations can be enabled or disabled as required to test the power consumption
-by adding or removing them in the ``power_down`` function.
-
-Changing to USB Audio Class 1 is achieved by setting the ``AUDIO_CLASS`` define in
-``src/core/xua_conf.h`` to the value ``1``.
+by adding or removing them in the ``power_down()`` function.
 
 .. note::
 
    Due to the I/O arrangement of the `XK-AUDIO-316-MC` the choice is made to run the software on
    tile[1], a realistic design would choose to run on tile[0] due to the boot flash being connected
    to this tile - thus allowing DFU to operate etc.
+
+XUD thread mode
+===============
+
+In `lib_xud/lib_xud/src/core/XUD_Main.xc`:
+
+ .. literalinclude:: ../../../lib_xud/lib_xud/src/core/XUD_Main.xc
+    :language: c
+    :name: xud_thread_mode
+    :start-at: set_thread_fast_mode_on
+    :end-at: set_thread_fast_mode_off
+
+ #. Remove the calls to both ``set_thread_fast_mode_on`` and ``set_thread_fast_mode_off``.
+
+ #. Add ``-DXUD_PRIORITY_HIGH`` to the ``APP_COMPILER_FLAGS`` in the ``CMakeLists.txt`` file.
+
+Using full-speed USB
+====================
+
+In `lib_xua/lib_xua/src/core/main.xc`, in the call to `XUD_Main()` replace the use of the variable
+`usbSpeed` with ``XUD_SPEED_FS``.
+
+ .. literalinclude:: ../../../lib_xua/lib_xua/src/core/main.xc
+    :language: c
+    :name: USB speed
+    :start-at: USB interface
+    :end-at: xudPwrCfg
+
+|newpage|
 
 ******************
 Power measurements
@@ -208,26 +232,29 @@ High-speed USB Audio Class 2.0 at 192 kHz
 
 .. tabularcolumns:: lrrr
 
-======================= =========== ========== ========
-Configuration           Core Power  I/O Power  Total
-======================= =========== ========== ========
-600/600 MHz, 0.90V       220 mW       22 mW     242 mW
-  9/600 MHz, 0.90V       162 mW       22 mW     184 mW
-  9/600 MHz, 0.90V, HP   118 mW       22 mW     140 mW
-======================= =========== ========== ========
+============================= =========== ========== ========
+Configuration                 Core Power  I/O Power  Total
+============================= =========== ========== ========
+600/600 MHz, 0.90V            220 mW       22 mW     242 mW
+  9/600 MHz, 0.90V            162 mW       22 mW     184 mW
+  9/600 MHz, 0.90V, HP [#f1]_ 118 mW       22 mW     140 mW
+============================= =========== ========== ========
+
 
 Full-speed USB Audio Class 2.0 at 48 kHz
 ----------------------------------------
 
 .. tabularcolumns:: lrrr
 
-======================= =========== ========== ========
-Configuration           Core Power  I/O Power  Total
-======================= =========== ========== ========
-600/600 MHz, 0.90V       216 mW       11 mW     227 mW
-  9/600 MHz, 0.90V       163 mW       11 mW     174 mW
-  9/600 MHz, 0.90V, HP   119 mW       11 mW     130 mW
-======================= =========== ========== ========
+============================= =========== ========== ========
+Configuration                 Core Power  I/O Power  Total
+============================= =========== ========== ========
+600/600 MHz, 0.90V            216 mW       11 mW     227 mW
+  9/600 MHz, 0.90V            163 mW       11 mW     174 mW
+  9/600 MHz, 0.90V, HP        119 mW       11 mW     130 mW
+============================= =========== ========== ========
+
+.. [#f1] `XUD` running in a high priority thread
 
 **************************************
 Hardware for minimal power consumption
@@ -257,7 +284,7 @@ Conclusion
 **********
 
 This application note shows how some simple design optimisations can be made to reduce overall
-power consumption by 25% compared with the baseline reference design.
+power consumption by approximately 40% compared with the baseline reference design.
 
 ***************
 Further reading
