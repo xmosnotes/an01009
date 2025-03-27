@@ -43,7 +43,7 @@ Overview
 The power measurements have been made using the following test harness:
 
 - The `XK-AUDIO-316-MC` board. This board has a jumper (J24)
-  over which the 5V supply to the core power supply can be monitored. Note
+  over which the 5V supply to the core power supply, upstream of the DC-DC converter, can be monitored. Note
   that this excludes 5V supply to 3V3 and 1V8 pins.
 
 - XMOS USB Audio library ``lib_xua``. The version used was 5.0.0.
@@ -99,16 +99,22 @@ Finally, the application binary can be built using ``xmake``::
 
     xmake -j -C build
 
-This command will cause a binary (.xe) to be generated in the `app_an01009/bin` directory,
+This command will cause two binaries (.xe files) to be generated in the `app_an01009/bin` directory
 
 Launching the example
 =====================
 
-From a XTC command prompt run the following command::
+From a XTC command prompt run the following command for the unoptimised firmware::
 
-    xrun bin/app_an01009.xe
+    xrun bin/std/app_an01009_std.xe
 
-Once this command has executed the device should have enumerated on the host machine.
+or for the low-power optimised firmware::
+
+    xrun bin/lp/app_an01009_lp.xe
+
+
+
+Once this command has executed the device should have enumerated on the host machine, and you may stream audio.
 
 .. _sec_optimisations:
 
@@ -119,18 +125,16 @@ Optimisations
 A number of different optimisations were applied to the reference design and their
 impact was measured. These optimisations can be grouped into categories.
 
-* **Reducing frequencies** Execute all the software to one physical tile.
+* **Reducing frequencies** Execute all the software on one physical tile.
   The `xcore` switch and other tile can both be slowed down. In this case, the frequency of core 0
-  is reduced to 9 MHz.
+  is reduced to 9 MHz which means it can still execute low speed tasks.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
-  buses are connected to two separate physical tiles. An extra 3 mW can be saved by switching the
-  other tile off rather than just slowing it down.
+  buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
 * **XUD thread mode**  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
-  `HIGH PRIORITY` mode.
+  `HIGH PRIORITY` mode which ensures it always receives 1/5 of the core MIPS.
 
-* **Using full-speed USB** Reduction of power by lowering the audio sample frequency to 48 kHz and use of full speed USB
-  rather than high-speed. The latter is important as it affects the non-core power consumed.
+* **Using full-speed USB** Reduction of power by lowering the audio sample frequency to 48 kHz and use of full speed USB rather than high-speed. The latter is important as it affects the PHY power consumed.
 
 **************
 Implementation
@@ -149,7 +153,7 @@ The following clock divider reduces the System PLL frequency of 600 MHz to 120 M
 for the switch:
 
 .. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
-   :start-after: Reduce switch clock frequency
+   :start-at: Reduce switch clock frequency
    :end-at: write_node_config_reg
 
 The following clock divider reduces the System PLL frequency of 600 MHz to 9 MHz
@@ -157,7 +161,7 @@ for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register
 
 .. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
    :start-after: Reduce core 0 clock frequency
-   :end-at: setps
+   :end-at: write_tile_config_reg
 
 These optimisations can be enabled or disabled as required to test the power consumption
 by adding or removing them in the ``power_down()`` function.
@@ -171,29 +175,34 @@ by adding or removing them in the ``power_down()`` function.
 XUD thread mode
 ===============
 
-In `lib_xud/lib_xud/src/core/XUD_Main.xc`:
+XUD normally sets ``set_thread_fast_mode_on()`` which improves timing in the core USB device library.
+However it also increases power consumption because the thread is always scheduled. In low-power
+USB audio applications it can be acceptable to disable this. 
 
- .. literalinclude:: ../../../lib_xud/lib_xud/src/core/XUD_Main.xc
+The below file is included by ``lib_xud`` and uses a macro to remove the call to ``set_thread_fast_mode_on()``.
+
+ .. literalinclude:: ../../app_an01009/src/extensions/xud_conf.h
     :language: c
     :name: xud_thread_mode
-    :start-at: set_thread_fast_mode_on
-    :end-at: set_thread_fast_mode_off
+    :start-at: #ifdef LOW_POWER_ENABLE
+    :end-at: #endif
 
- #. Remove the calls to both ``set_thread_fast_mode_on`` and ``set_thread_fast_mode_off``.
+In addition, to ensure that XUD always receives sufficient MIPS in the cases where more than 5 hardware threads
+are used on the XUD tile, the following define is set in the ``CMakeLists.txt``::
 
- #. Add ``-DXUD_PRIORITY_HIGH`` to the ``APP_COMPILER_FLAGS`` in the ``CMakeLists.txt`` file.
+    -DXUD_PRIORITY_HIGH=1
 
 Using full-speed USB
 ====================
 
-In `lib_xua/lib_xua/src/core/main.xc`, in the call to `XUD_Main()` replace the use of the variable
-`usbSpeed` with ``XUD_SPEED_FS``.
+By switching to USB Audio Class 1, ``lib_xud`` automatically uses full-speed USB. This can be affected by
+modifying ``xua_conf.h``.
 
- .. literalinclude:: ../../../lib_xua/lib_xua/src/core/main.xc
+ .. literalinclude:: ../../app_an01009/src/core/xua_conf.h
     :language: c
-    :name: USB speed
-    :start-at: USB interface
-    :end-at: xudPwrCfg
+    :name: xua_audio_class
+    :start-at: #ifdef LOW_POWER_ENABLE
+    :end-at: #endif
 
 |newpage|
 
@@ -223,42 +232,37 @@ DC-DC efficiency          90%                     90%
 Comparison of optimisations
 ===========================
 
-The tables below show the measured core power consumption of `xcore.ai` running USB Audio
+The tables below show the measured power consumption of `xcore.ai` running USB Audio
 reference design software with different optimisations. The calculated I/O power is added to get
-the total power consumption value.
+the total power consumption value (not including DAC or CODEC).
 
 The `Configuration` column lists the core 0 and core 1 clock frequencies, followed by the
 core voltage.
 
 
-High-speed USB Audio Class 2.0 at 192 kHz
------------------------------------------
+Streaming USB Audio at 48 kHz
+-----------------------------
 
 .. tabularcolumns:: lrrr
 
-============================= =========== ========== ========
-Configuration                 Core Power  I/O Power  Total
-============================= =========== ========== ========
-600/600 MHz, 0.90V            220 mW       22 mW     242 mW
-  9/600 MHz, 0.90V            162 mW       22 mW     184 mW
-  9/600 MHz, 0.90V, HP [#f1]_ 118 mW       22 mW     140 mW
-============================= =========== ========== ========
+======================================== =========== ========== ========
+Configuration                            Core Power  I/O Power  Total
+======================================== =========== ========== ========
+Standard, 0.90V, 600 MHz, HS, Class 2    200 mW       22 mW     222 mW
+Standard + clock reduction               150 mW       22 mW     172 mW
+Standard + clock + buffer                105 mW       22 mW     127 mW
+Standard + clock + buffer + thread mode   77 mW       22 mW      99 mW
+Low-power, all optimisations, FS Class 1  73 mW       11 mW      84 mW
+======================================== =========== ========== ========
 
+.. note::
+    The additional power required to stream at 192 kHz (only possible with Class 2 - 96 kHz limit for Class 1)
+    is only a milliwatt or two. Likewise, when not streaming, power is similar because USB must stay alive.
 
-Full-speed USB Audio Class 2.0 at 48 kHz
-----------------------------------------
-
-.. tabularcolumns:: lrrr
-
-============================= =========== ========== ========
-Configuration                 Core Power  I/O Power  Total
-============================= =========== ========== ========
-600/600 MHz, 0.90V            216 mW       11 mW     227 mW
-  9/600 MHz, 0.90V            163 mW       11 mW     174 mW
-  9/600 MHz, 0.90V, HP        119 mW       11 mW     130 mW
-============================= =========== ========== ========
-
-.. [#f1] `XUD` running in a high priority thread
+.. note::
+    The above powers *include* an estimated 90% efficiency for the DC-DC converters.
+    Consequently the chip power is around 10% lower than the values shown. By selecting a 
+    more efficient DC-DC converter, overall power consumption may be further reduced. 
 
 **************************************
 Hardware for minimal power consumption
@@ -291,7 +295,7 @@ Conclusion
 **********
 
 This application note shows how some simple design optimisations can be made to reduce overall
-power consumption by approximately 40% compared with the baseline reference design.
+power consumption by approximately 62% compared with the baseline reference design.
 
 ***************
 Further reading
@@ -300,6 +304,8 @@ Further reading
 * `AN02022: xcore.ai Clock frequency control <www.xmos.com/file/an02022>`_
 
 * `AN02023: xcore.ai Power consumption estimation <www.xmos.com/file/an02023>`_
+
+* `AN02030: Improving IO response times using FAST or PRIORITY modes <www.xmos.com/file/an02030>`_
 
 * `XU316-1024-QF60A datasheet <https://www.xmos.com/?s=XM-014034-PC>`_
 

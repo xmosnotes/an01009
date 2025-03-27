@@ -8,7 +8,7 @@ void power_down()
     delay_seconds(10);
 
     // Reduce switch clock frequency
-    write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, 8);
+    write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, 4);
 
 	// Reduce core 0 clock frequency (to 9 MHz)
     write_tile_config_reg(tile[0], XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, 0x00000040);

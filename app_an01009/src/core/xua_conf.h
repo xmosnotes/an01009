@@ -48,7 +48,11 @@
 #define MIN_FREQ           (48000)
 #endif
 
+#ifdef LOW_POWER_ENABLE
+#define AUDIO_CLASS        (1)
+#else
 #define AUDIO_CLASS        (2)
+#endif
 
 #define XUA_USE_SW_PLL     (0)
 
