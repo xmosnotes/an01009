@@ -161,7 +161,7 @@ for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register
 
 .. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
    :start-after: Reduce core 0 clock frequency
-   :end-at: write_tile_config_reg
+   :end-at: setps
 
 These optimisations can be enabled or disabled as required to test the power consumption
 by adding or removing them in the ``power_down()`` function.
@@ -248,7 +248,7 @@ Streaming USB Audio at 48 kHz
 ======================================== =========== ========== ========
 Configuration                            Core Power  I/O Power  Total
 ======================================== =========== ========== ========
-Standard, 0.90V, 600 MHz, HS, Class 2    200 mW       22 mW     222 mW
+Standard, 0.90V, 600 MHz, HS Class 2     200 mW       22 mW     222 mW
 Standard + clock reduction               150 mW       22 mW     172 mW
 Standard + clock + buffer                105 mW       22 mW     127 mW
 Standard + clock + buffer + thread mode   77 mW       22 mW      99 mW
