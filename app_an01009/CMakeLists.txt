@@ -6,21 +6,29 @@ set(APP_HW_TARGET xk-audio-316-mc-tile1.xn)
 
 # Use sw_usb_audio deps and add lib_awe
 set(APP_DEPENDENT_MODULES "lib_xua(5.0.0)"
-                          "lib_board_support(1.1.0)"
+                          "lib_board_support(1.2.2)"
                           )
 
 set(APP_PCA_ENABLE ON)
 
-set(APP_COMPILER_FLAGS  -fcomment-asm
-                        -O3
-                        -report
-                        -lquadflash
-                        -g
-                        -DBOARD_SUPPORT_BOARD=XK_AUDIO_316_MC_AB
-                        -DUSB_TILE=tile[1]
-                        -DXUD_CORE_CLOCK=600
-                        -DXUA_QUAD_SPI_FLASH=1
-                        )
+set(COMMON_COMPILER_FLAGS   -fcomment-asm
+                            -O3
+                            -report
+                            -lquadflash
+                            -g
+                            -DBOARD_SUPPORT_BOARD=XK_AUDIO_316_MC_AB
+                            -DUSB_TILE=tile[1]
+                            -DXUD_CORE_CLOCK=600
+                            -DXUA_QUAD_SPI_FLASH=1
+                            )
+
+set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS})
+
+set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
+                            -DLOW_POWER_ENABLE=1
+                            -DCHAN_BUFF_CTRL=1
+                            -DXUD_PRIORITY_HIGH=1
+                            )
 
 set(APP_INCLUDES    src
                     src/core
