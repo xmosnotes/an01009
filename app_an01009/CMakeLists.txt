@@ -12,7 +12,7 @@ set(APP_DEPENDENT_MODULES "lib_xua(5.0.0)"
 set(APP_PCA_ENABLE ON)
 
 set(COMMON_COMPILER_FLAGS   -fcomment-asm
-                            -O3
+                            -Os
                             -report
                             -lquadflash
                             -g
