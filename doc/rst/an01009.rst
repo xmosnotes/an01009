@@ -78,6 +78,11 @@ Example application
 
 An accompanying example application (``app_an01009``) is provided along side this application note.
 
+Two build configurations are provided; one with no power optimisations applied and one with all power
+optimisations enabled, allowing the user to quickly compare the power of the baseline and optimised versions.
+
+Individual power optimisations may be enabled and disabled by following the steps in the :ref:`sec_optimisations` section.
+
 Building the example
 ====================
 
@@ -132,9 +137,10 @@ impact was measured. These optimisations can be grouped into categories.
   buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
 * **XUD thread mode**  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
-  `HIGH PRIORITY` mode which ensures it always receives 1/5 of the core MIPS.
+  `HIGH PRIORITY` mode which ensures it always receives 1/5 of the core MIPS. For further information about the operation
+  of thread modes please refer to :ref:`further reading section<further_reading>` where you can find an appnote on this subject.
 
-* **Using full-speed USB** Reduction of power by lowering the audio sample frequency to 48 kHz and use of full speed USB rather than high-speed. The latter is important as it affects the PHY power consumed.
+* **Using full-speed USB** Reduction of power through use of full speed USB rather than high-speed. This is important as it affects the PHY power consumed. ``lib_xua`` follows the standards and uses high-speed (480 Mbps) USB for Audio Class 2 and full-speed (12 Mbps) for Audio Class 1.
 
 **************
 Implementation
@@ -163,21 +169,24 @@ for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register
    :start-after: Reduce core 0 clock frequency
    :end-at: setps
 
+Choosing a slow, but still functional, core speed of 9 MHz allows the I²C master task on that tile
+to still function, albeit slowly, when making sample rate changes which require I²C configuration of the DAC.
+
 These optimisations can be enabled or disabled as required to test the power consumption
 by adding or removing them in the ``power_down()`` function.
 
 .. note::
 
    Due to the I/O arrangement of the `XK-AUDIO-316-MC` the choice is made to run the software on
-   tile[1], a realistic design would choose to run on tile[0] due to the boot flash being connected
+   tile[1]. A realistic design would choose to run on tile[0] due to the boot flash being connected
    to this tile - thus allowing DFU to operate etc.
 
 XUD thread mode
 ===============
 
-XUD normally sets ``set_thread_fast_mode_on()`` which improves timing in the core USB device library.
-However it also increases power consumption because the thread is always scheduled. In low-power
-USB audio applications it can be acceptable to disable this. 
+XUD normally sets ``set_thread_fast_mode_on()`` which improves IO timings in the core USB device library.
+However it also increases power consumption because the thread is always scheduled, event when waiting on an event. In low-power
+USB audio applications it can be acceptable to disable fast mode. 
 
 The below file is included by ``lib_xud`` and uses a macro to remove the call to ``set_thread_fast_mode_on()``.
 
@@ -195,7 +204,7 @@ are used on the XUD tile, the following define is set in the ``CMakeLists.txt``:
 Using full-speed USB
 ====================
 
-By switching to USB Audio Class 1, ``lib_xud`` automatically uses full-speed USB. This can be affected by
+By switching to USB Audio Class 1, ``lib_xua`` automatically uses full-speed USB when calling ``lib_xua``. This can be affected by
 modifying ``xua_conf.h``.
 
  .. literalinclude:: ../../app_an01009/src/core/xua_conf.h
@@ -213,7 +222,7 @@ Power measurements
 I/O power
 =========
 
-I/O power is calculated to be as follows (note these have not yet been measured) for USB full-speed
+I/O power is calculated to be as follows (note these are estimated) for USB full-speed
 and high-speed operation:
 
 .. tabularcolumns:: lrr
@@ -250,7 +259,7 @@ Configuration                            Core Power  I/O Power  Total
 ======================================== =========== ========== ========
 Standard, 0.90V, 600 MHz, HS Class 2     200 mW       22 mW     222 mW
 Standard + clock reduction               150 mW       22 mW     172 mW
-Standard + clock + buffer                105 mW       22 mW     127 mW
+Standard + clock + event based buffer    105 mW       22 mW     127 mW
 Standard + clock + buffer + thread mode   77 mW       22 mW      99 mW
 Low-power, all optimisations, FS Class 1  73 mW       11 mW      84 mW
 ======================================== =========== ========== ========
@@ -276,7 +285,7 @@ importance:
 
 * Put all I/O on tile 0; in particular I²S and I²C, and build with tile 0 for I/O and ``lib_xud``.
 
-* In the software switch off tile 1 upon booting (see ``power_down.xc``) [#f2]_.
+* In the software, switch off tile 1 upon booting (see ``power_down.xc``) [#f2]_.
 
 * Use a DC-DC converter to generate 1.8V from 5V
 
@@ -295,7 +304,11 @@ Conclusion
 **********
 
 This application note shows how some simple design optimisations can be made to reduce overall
-power consumption by approximately 62% compared with the baseline reference design.
+power consumption by approximately 62% compared with the baseline reference design whilst still
+providing high-quality, bit-perfect USB audio streaming.
+
+
+.. _further_reading:
 
 ***************
 Further reading
