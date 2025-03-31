@@ -1,4 +1,4 @@
-// Copyright 2023-2024 XMOS LIMITED.
+// Copyright 2023-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _XUA_CONF_H_
 #define _XUA_CONF_H_
@@ -48,7 +48,11 @@
 #define MIN_FREQ           (48000)
 #endif
 
+#ifdef LOW_POWER_ENABLE
+#define AUDIO_CLASS        (1)
+#else
 #define AUDIO_CLASS        (2)
+#endif
 
 #define XUA_USE_SW_PLL     (0)
 
