@@ -273,6 +273,10 @@ Low-power, all optimisations, FS Class 1  73 mW       11 mW      84 mW
     Consequently the chip power is around 10% lower than the values shown. By selecting a 
     more efficient DC-DC converter, overall power consumption may be further reduced. 
 
+.. note::
+    In (device) receive only applications, such as USB audio output only sound cards, USB Tx
+    power in the USB PHY will be minimal.
+
 **************************************
 Hardware for minimal power consumption
 **************************************
@@ -285,19 +289,28 @@ importance:
 
 * Put all I/O on tile 0; in particular I²S and I²C, and build with tile 0 for I/O and ``lib_xud``.
 
-* In the software, switch off tile 1 upon booting (see ``power_down.xc``) [#f2]_.
+* In the software, switch off tile 1 upon booting (see ``power_down.xc``) [#f1]_.
 
-* Use a DC-DC converter to generate 1.8V from 5V
+* Use a DC-DC converter to generate 1.8V from 5V for higher efficiency.
 
-* Use 1.8V I/O (for example the `QF60A` part)
+* Use 1.8V I/O (for example the xcore.ai `QF60A` part).
+
+* Replace the xcore.ai internal master clock PLL with an external MCLK source. This will save
+  a few milliwatts of xcore power at the expense of the power used by the external oscillator.
 
 * Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very little, so an LDO may
-  be more efficient)
+  be more efficient).
 
-* Minimise power supply on USB suspend
+* Minimise power supply on USB suspend [#f2]_.
 
-.. [#f2] Note this does *not* effect the secondary PLL output pin muxed with IO pin `X1D11` of
-   tile[1]
+.. [#f1] Note this does *not* affect the secondary PLL output pin muxed with IO pin `X1D11` of
+   tile[1] which continues to operate.
+
+.. [#f2] Suspend, by default, does not offer significantly reduced power consumption because
+   the `xcore` stays powered up waiting to receive the resume signal. Work is underway at XMOS to
+   investigate reducing suspend power however ``lib_xua`` already provides the ``UserHostActive()``
+   callback (derived from the ``lib_xud`` suspend/resume callbacks) which can be used to shut
+   down external hardware to reduce suspend power consumption. 
 
 **********
 Conclusion
