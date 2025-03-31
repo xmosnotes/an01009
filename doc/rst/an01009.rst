@@ -301,16 +301,9 @@ importance:
 * Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very little, so an LDO may
   be more efficient).
 
-* Minimise power supply on USB suspend [#f2]_.
-
 .. [#f1] Note this does *not* affect the secondary PLL output pin muxed with IO pin `X1D11` of
    tile[1] which continues to operate.
 
-.. [#f2] Suspend, by default, does not offer significantly reduced power consumption because
-   the `xcore` stays powered up waiting to receive the resume signal. Work is underway at XMOS to
-   investigate reducing suspend power however ``lib_xua`` already provides the ``UserHostActive()``
-   callback (derived from the ``lib_xud`` suspend/resume callbacks) which can be used to shut
-   down external hardware to reduce suspend power consumption. 
 
 **********
 Conclusion
