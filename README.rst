@@ -23,34 +23,34 @@ to reduce its power consumption.
 Key features
 ************
 
- * Guidance on reducing power consumption in USB Audio designs
- * Power measurement data comparing selected optimisations
+* Guidance on reducing power consumption in USB Audio designs
+* Power measurement data comparing selected optimisations
 
 ************
 Known issues
 ************
 
- * None
+* None
 
 **************
 Required tools
 **************
 
- * XMOS XTC Tools: 15.3.0
+* XMOS XTC Tools: 15.3.0
 
 *********************************
 Required libraries (dependencies)
 *********************************
 
- * `lib_xua <www.xmos.com/file/lib_xua>`_
- * `lib_board_support <www.xmos.com/file/lib_board_support>`_
+* `lib_xua <www.xmos.com/file/lib_xua>`_
+* `lib_board_support <www.xmos.com/file/lib_board_support>`_
 
 *************
 Related notes
 *************
 
- * `AN02022: xcore.ai Clock Frequency Control <www.xmos.com/file/an02022>`_
- * `AN02023: xcore.ai Power Consumption Estimation <www.xmos.com/file/an02023>`_
+* `AN02022: xcore.ai Clock Frequency Control <www.xmos.com/file/an02022>`_
+* `AN02023: xcore.ai Power Consumption Estimation <www.xmos.com/file/an02023>`_
 
 *******
 Support
