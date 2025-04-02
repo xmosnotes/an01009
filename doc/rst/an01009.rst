@@ -32,7 +32,7 @@ reductions.
 .. warning::
 
     Whilst application note describes steps for reducing power on a `XK-AUDIO-316-MC`
-    board since it is readily and commercially available. However, this hardware arrangement of this
+    board since it is readily and commercially available. However, the hardware arrangement of this
     board does not lend itself to an ideal low power configuration. Compromises made and details of
     an ideal configuration are detailed in this document.
 
@@ -68,7 +68,7 @@ consumption of the other supplies is estimated.
             Test setup
 
 For each configuration, basic enumeration and playback was confirmed on Windows,
-with power being easured during audio playback.
+with power being measured during audio playback.
 
 
 
@@ -104,7 +104,7 @@ This command will cause a binary (.xe) to be generated in the `app_an01009/bin` 
 Launching the example
 =====================
 
-From a XTC command prompt run the following command::
+From an XTC command prompt run the following command::
 
     xrun bin/app_an01009.xe
 
