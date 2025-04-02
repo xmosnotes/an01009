@@ -43,8 +43,9 @@ Overview
 The power measurements have been made using the following test harness:
 
 - The `XK-AUDIO-316-MC` board. This board has a jumper (J24)
-  over which the 5V supply to the core power supply which is the main power draw of the chip,
+  over which the 5V supply to the core power supply, which is the main power draw of the chip,
   upstream of the DC-DC converter, can be monitored. Note that this excludes 5V supply to 3V3 and 1V8 pins.
+
 
 - XMOS USB Audio library ``lib_xua``. The version used was 5.0.0.
 
@@ -105,6 +106,7 @@ Finally, the application binary can be built using ``xmake``::
     xmake -j -C build
 
 This command will cause two binaries (.xe files) to be generated below the `app_an01009/bin` directory
+
 
 Launching the example
 =====================
@@ -190,6 +192,7 @@ USB audio applications it can be acceptable to disable fast mode.
 
 The below file is included by ``lib_xud`` and uses a macro to remove the call to ``set_thread_fast_mode_on()``.
 
+
  .. literalinclude:: ../../app_an01009/src/extensions/xud_conf.h
     :language: c
     :name: xud_thread_mode
@@ -202,6 +205,7 @@ are used on the XUD tile, the following define is set in the ``CMakeLists.txt``:
     -DXUD_PRIORITY_HIGH=1
 
 Please see the :ref:`further reading section<further_reading>` for more information regarding xcore thread modes.
+
 
 Using full-speed USB
 ====================
