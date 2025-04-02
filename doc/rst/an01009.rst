@@ -8,7 +8,7 @@ stereo-out applications. This document then outlines optional changes
 to the hardware and software, with the goal of reducing power consumption.
 
 This application note assumes that the design comprises an `XMOS` device to
-interface to an external DAC over I²S to USB.
+interface USB to an external DAC connected via I²S.
 
 The USB Audio reference design is optimised for performance, configurability,
 and low resource usage. The standard reference design
@@ -31,9 +31,9 @@ reductions.
 
 .. warning::
 
-    Whilst application note describes steps for reducing power on a `XK-AUDIO-316-MC`
-    board since it is readily and commercially available. However, this hardware arrangement of this
-    board does not lend itself to an ideal low power configuration. Compromises made and details of
+    This application note describes steps for reducing power on an `XK-AUDIO-316-MC`
+    board since it is readily and commercially available. However, the hardware arrangement of this
+    board does not lend itself to an ideal low power system configuration. Compromises made and details of
     an ideal configuration are detailed in this document.
 
 ********
@@ -43,8 +43,9 @@ Overview
 The power measurements have been made using the following test harness:
 
 - The `XK-AUDIO-316-MC` board. This board has a jumper (J24)
-  over which the 5V supply to the core power supply, upstream of the DC-DC converter, can be monitored. Note
-  that this excludes 5V supply to 3V3 and 1V8 pins.
+  over which the 5V supply to the core power supply, which is the main power draw of the chip,
+  upstream of the DC-DC converter, can be monitored. Note that this excludes 5V supply to 3V3 and 1V8 pins.
+
 
 - XMOS USB Audio library ``lib_xua``. The version used was 5.0.0.
 
@@ -68,7 +69,7 @@ consumption of the other supplies is estimated.
             Test setup
 
 For each configuration, basic enumeration and playback was confirmed on Windows,
-with power being easured during audio playback.
+with power being measured during audio playback.
 
 
 
@@ -91,20 +92,21 @@ the `XMOS` build and dependency management system. `xcommon-cmake` is bundled wi
 
 The ``an01009`` software zip-file should be downloaded and unzipped to a chosen directory.
 
-To configure the build run the following from an XTC command prompt::
+To configure the build, run the following from an XTC command prompt::
 
     cd an01009
     cd app_an01009
     cmake -G "Unix Makefiles" -B build
 
-All required dependencies are included in the software download, however, if any are missing it is
+All required dependencies are included in the software download, however, if any were missing it is
 at this configure step that they will be downloaded by the build system.
 
 Finally, the application binary can be built using ``xmake``::
 
     xmake -j -C build
 
-This command will cause two binaries (.xe files) to be generated in the `app_an01009/bin` directory
+This command will cause two binaries (.xe files) to be generated below the `app_an01009/bin` directory
+
 
 Launching the example
 =====================
@@ -131,8 +133,8 @@ A number of different optimisations were applied to the reference design and the
 impact was measured. These optimisations can be grouped into categories.
 
 * **Reducing frequencies** Execute all the software on one physical tile.
-  The `xcore` switch and other tile can both be slowed down. In this case, the frequency of core 0
-  is reduced to 9 MHz which means it can still execute low speed tasks.
+  The `xcore` switch and other tile can both be slowed down. In this case, the frequency of tile[0]
+  is reduced to 9 MHz which means it can still execute low speed tasks, such as I²C master.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
   buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
@@ -163,7 +165,7 @@ for the switch:
    :end-at: write_node_config_reg
 
 The following clock divider reduces the System PLL frequency of 600 MHz to 9 MHz
-for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register:
+for tile[0], which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register:
 
 .. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
    :start-after: Reduce core 0 clock frequency
@@ -185,10 +187,11 @@ XUD thread mode
 ===============
 
 XUD normally sets ``set_thread_fast_mode_on()`` which improves IO timings in the core USB device library.
-However it also increases power consumption because the thread is always scheduled, event when waiting on an event. In low-power
+However it also increases power consumption because the thread is always scheduled, even when waiting on an event. In low-power
 USB audio applications it can be acceptable to disable fast mode. 
 
 The below file is included by ``lib_xud`` and uses a macro to remove the call to ``set_thread_fast_mode_on()``.
+
 
  .. literalinclude:: ../../app_an01009/src/extensions/xud_conf.h
     :language: c
@@ -200,6 +203,9 @@ In addition, to ensure that XUD always receives sufficient MIPS in the cases whe
 are used on the XUD tile, the following define is set in the ``CMakeLists.txt``::
 
     -DXUD_PRIORITY_HIGH=1
+
+Please see the :ref:`further reading section<further_reading>` for more information regarding xcore thread modes.
+
 
 Using full-speed USB
 ====================
@@ -245,7 +251,7 @@ The tables below show the measured power consumption of `xcore.ai` running USB A
 reference design software with different optimisations. The calculated I/O power is added to get
 the total power consumption value (not including DAC or CODEC).
 
-The `Configuration` column lists the core 0 and core 1 clock frequencies, followed by the
+The `Configuration` column lists the tile[0] and tile[1] clock frequencies, followed by the
 core voltage.
 
 
