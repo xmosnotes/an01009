@@ -31,8 +31,8 @@ reductions.
 
 .. warning::
 
-    Whilst application note describes steps for reducing power on a `XK-AUDIO-316-MC`
-    board since it is readily and commercially available. However, this hardware arrangement of this
+    This application note describes steps for reducing power on an `XK-AUDIO-316-MC`
+    board since it is readily and commercially available. However, the hardware arrangement of this
     board does not lend itself to an ideal low power configuration. Compromises made and details of
     an ideal configuration are detailed in this document.
 
@@ -68,7 +68,7 @@ consumption of the other supplies is estimated.
             Test setup
 
 For each configuration, basic enumeration and playback was confirmed on Windows,
-with power being easured during audio playback.
+with power being measured during audio playback.
 
 
 
@@ -132,7 +132,7 @@ impact was measured. These optimisations can be grouped into categories.
 
 * **Reducing frequencies** Execute all the software on one physical tile.
   The `xcore` switch and other tile can both be slowed down. In this case, the frequency of core 0
-  is reduced to 9 MHz which means it can still execute low speed tasks.
+  is reduced to 9 MHz which means it can still execute low speed tasks such as I²C master.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
   buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
@@ -163,7 +163,7 @@ for the switch:
    :end-at: write_node_config_reg
 
 The following clock divider reduces the System PLL frequency of 600 MHz to 9 MHz
-for core 0, which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register:
+for tile[0], which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` register:
 
 .. literalinclude:: ../../app_an01009/src/extensions/power_down.xc
    :start-after: Reduce core 0 clock frequency
@@ -245,7 +245,7 @@ The tables below show the measured power consumption of `xcore.ai` running USB A
 reference design software with different optimisations. The calculated I/O power is added to get
 the total power consumption value (not including DAC or CODEC).
 
-The `Configuration` column lists the core 0 and core 1 clock frequencies, followed by the
+The `Configuration` column lists the tile[0] and tile[1] clock frequencies, followed by the
 core voltage.
 
 
