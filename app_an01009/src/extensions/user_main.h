@@ -1,4 +1,4 @@
-// Copyright 2023-2024 XMOS LIMITED.
+// Copyright 2023-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef USER_MAIN_H
 #define USER_MAIN_H
@@ -14,6 +14,14 @@ extern unsafe client interface i2c_master_if i_i2c_client;
 extern void board_setup();
 extern void power_down();
 
+#ifdef LOW_POWER_ENABLE
+/* Call the clock power down code */
+#define POWER_DOWN() power_down()
+#else
+/* Do nothing */
+#define POWER_DOWN()
+#endif
+
 /* Declarations that will be inserted in main.xc from lib_xua */
 #define USER_MAIN_DECLARATIONS                                          \
     interface i2c_master_if i2c[1];
@@ -24,7 +32,7 @@ extern void power_down();
         board_setup();                                                  \
         par {                                                           \
             i2c_master(i2c, 1, p_scl, p_sda, 100);                      \
-            power_down();                                               \
+            POWER_DOWN();                                               \
         }                                                               \
     }                                                                   \
     on tile[1]: {                                                       \
