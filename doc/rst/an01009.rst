@@ -233,7 +233,7 @@ Please see the :ref:`further reading section<further_reading>` for more informat
 Using full-speed USB
 ====================
 
-By switching to USB Audio Class ones, ``lib_xua`` automatically uses full-speed USB when calling ``lib_xua``. This can be affected by
+By switching to USB Audio Class one, ``lib_xua`` automatically uses full-speed USB when calling ``lib_xua``. This can be affected by
 modifying ``xua_conf.h``.
 
  .. literalinclude:: ../../app_an01009/src/core/xua_conf.h
