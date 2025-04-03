@@ -43,9 +43,8 @@ Overview
 The power measurements have been made using the following test harness:
 
 - The `XK-AUDIO-316-MC` board. This board has a jumper (J24)
-  over which the 5V supply to the core power supply, which is the main power draw of the chip,
+  over which the 5V supply to the core power supply which is the main power draw of the chip,
   upstream of the DC-DC converter, can be monitored. Note that this excludes 5V supply to 3V3 and 1V8 pins.
-
 
 - XMOS USB Audio library ``lib_xua``. The version used was 5.0.0.
 
@@ -107,7 +106,6 @@ Finally, the application binary can be built using ``xmake``::
 
 This command will cause two binaries (.xe files) to be generated below the `app_an01009/bin` directory
 
-
 Launching the example
 =====================
 
@@ -138,8 +136,12 @@ impact was measured. These optimisations can be grouped into categories.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
   buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
+* **Event-based buffering** Ensure that as few instructions as possible are executed in the audio buffering subsystem
+  by only checking shared memory variables when needed through use of a channel event. The define ``CHAN_BUFF_CTRL`` is
+  provided in ``lib_xua`` which enables this feature.
+
 * **XUD thread mode**  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
-  `HIGH PRIORITY` mode which ensures it always receives 1/5 of the core MIPS. For further information about the operation
+  `HIGH PRIORITY` mode which ensures it always receives 1/5 of the tile MIPS. For further information about the operation
   of thread modes please refer to :ref:`further reading section<further_reading>` where you can find an appnote on this subject.
 
 * **Using full-speed USB** Reduction of power through use of full speed USB rather than high-speed. This is important as it affects the PHY power consumed. ``lib_xua`` follows the standards and uses high-speed (480 Mbps) USB for Audio Class 2 and full-speed (12 Mbps) for Audio Class 1.
@@ -171,8 +173,10 @@ for tile[0], which is enabled by the write to the ``XS1_PS_XCORE_CTRL0`` registe
    :start-after: Reduce core 0 clock frequency
    :end-at: setps
 
-Choosing a slow, but still functional, core speed of 9 MHz allows the I²C master task on that tile
+Choosing a slow, but still functional, tile speed of 9 MHz allows the I²C master task on that tile
 to still function, albeit slowly, when making sample rate changes which require I²C configuration of the DAC.
+
+If no functions are implemented in the unused tile then there is no reason not to enable this optimisation.
 
 These optimisations can be enabled or disabled as required to test the power consumption
 by adding or removing them in the ``power_down()`` function.
@@ -183,6 +187,27 @@ by adding or removing them in the ``power_down()`` function.
    tile[1]. A realistic design would choose to run on tile[0] due to the boot flash being connected
    to this tile - thus allowing DFU to operate etc.
 
+
+Event-based audio buffer
+========================
+
+By default, ``lib_xua`` uses a performance and resource optimised audio buffer. Part of this buffer 
+consists of a polling loop which monitors shared-memory variables. This polling loop is always
+executing instructions and therefore consumes power at all times.
+
+``lib_xua`` includes an option to add a channel between the two buffer threads which consumes
+two channel-ends but pauses the `decouple` thread until a shared-memory variable needs reading.
+Blocking on a channel de-schedules the thread and therefore saves a useful amount of power.
+
+Highly featured designs (especially those including digital inputs or outputs) may not have 
+sufficient channel-end resources to implement this power-saving feature (resulting in a linker error)
+however simpler designs such as DACs, microphones or headphones can safely enable this feature.
+
+The following define in the application CMake file enables the event-based audio buffer::
+
+    -DCHAN_BUFF_CTRL=1
+
+
 XUD thread mode
 ===============
 
@@ -190,14 +215,14 @@ XUD normally sets ``set_thread_fast_mode_on()`` which improves IO timings in the
 However it also increases power consumption because the thread is always scheduled, even when waiting on an event. In low-power
 USB audio applications it can be acceptable to disable fast mode. 
 
-The below file is included by ``lib_xud`` and uses a macro to remove the call to ``set_thread_fast_mode_on()``.
-
+The file ``xud_conf.h`` is included by ``lib_xud`` and you in that file define
+a macro to remove the call to ``set_thread_fast_mode_on()``.
 
  .. literalinclude:: ../../app_an01009/src/extensions/xud_conf.h
     :language: c
     :name: xud_thread_mode
-    :start-at: #ifdef LOW_POWER_ENABLE
-    :end-at: #endif
+    :start-after: #ifdef LOW_POWER_ENABLE
+    :end-before: #endif
 
 In addition, to ensure that XUD always receives sufficient MIPS in the cases where more than 5 hardware threads
 are used on the XUD tile, the following define is set in the ``CMakeLists.txt``::
@@ -206,11 +231,10 @@ are used on the XUD tile, the following define is set in the ``CMakeLists.txt``:
 
 Please see the :ref:`further reading section<further_reading>` for more information regarding xcore thread modes.
 
-
 Using full-speed USB
 ====================
 
-By switching to USB Audio Class 1, ``lib_xua`` automatically uses full-speed USB when calling ``lib_xua``. This can be affected by
+By switching to USB Audio Class one, ``lib_xua`` automatically uses full-speed USB when calling ``lib_xua``. This can be affected by
 modifying ``xua_conf.h``.
 
  .. literalinclude:: ../../app_an01009/src/core/xua_conf.h
@@ -218,6 +242,9 @@ modifying ``xua_conf.h``.
     :name: xua_audio_class
     :start-at: #ifdef LOW_POWER_ENABLE
     :end-at: #endif
+
+This saves a little core power but a more significant amount of PHY power, at the expense of reducing the capabilities of the 
+USB audio device by limiting it to 96 kHz which is the maximum for audio class one. 
 
 |newpage|
 
@@ -251,8 +278,7 @@ The tables below show the measured power consumption of `xcore.ai` running USB A
 reference design software with different optimisations. The calculated I/O power is added to get
 the total power consumption value (not including DAC or CODEC).
 
-The `Configuration` column lists the tile[0] and tile[1] clock frequencies, followed by the
-core voltage.
+The `Configuration` column lists the low-power firmware changes and resultant power consumptions achieved.
 
 
 Streaming USB Audio at 48 kHz
@@ -264,7 +290,7 @@ Streaming USB Audio at 48 kHz
 Configuration                            Core Power  I/O Power  Total
 ======================================== =========== ========== ========
 Standard, 0.90V, 600 MHz, HS Class 2     200 mW       22 mW     222 mW
-Standard + clock reduction               150 mW       22 mW     172 mW
+Standard + tile/switch clock reduction   150 mW       22 mW     172 mW
 Standard + clock + event based buffer    105 mW       22 mW     127 mW
 Standard + clock + buffer + thread mode   77 mW       22 mW      99 mW
 Low-power, all optimisations, FS Class 1  73 mW       11 mW      84 mW
@@ -316,8 +342,8 @@ Conclusion
 **********
 
 This application note shows how some simple design optimisations can be made to reduce overall
-power consumption by approximately 62% compared with the baseline reference design whilst still
-providing high-quality, bit-perfect USB audio streaming.
+power consumption by approximately 55% (or 62% if USB audio class 1 is used) compared with the 
+baseline USB audio class 2 reference design whilst still providing high-quality, bit-perfect USB audio streaming.
 
 
 .. _further_reading:
