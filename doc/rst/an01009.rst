@@ -137,7 +137,6 @@ impact was measured. These optimisations can be grouped into categories.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
   buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
-<<<<<<< HEAD
 * **Event-based buffering**
   Ensure that as few instructions as possible are executed in the audio buffering subsystem
   by only checking shared memory variables when needed through use of a channel event. The define ``CHAN_BUFF_CTRL`` is
@@ -145,21 +144,14 @@ impact was measured. These optimisations can be grouped into categories.
 
 * **XUD thread mode**
   Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
-=======
-* **Event-based buffering** Ensure that as few instructions as possible are executed in the audio buffering subsystem
-  by only checking shared memory variables when needed through use of a channel event. The define ``CHAN_BUFF_CTRL`` is
-  provided in ``lib_xua`` which enables this feature.
-
-* **XUD thread mode**  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
->>>>>>> v2.1.0
   `HIGH PRIORITY` mode which ensures it always receives 1/5 of the tile MIPS. For further information about the operation
   of thread modes please refer to :ref:`further reading section<further_reading>` where you can find an appnote on this subject.
 
-* **Audio shutdown when not streaming**
+* **Audio shutdown when idle**
   By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the makefile, ``lib_xua`` supports shutting down of
   the audiohub subsystem which includes I²S. An additional callback ``AudioHwDeInit()`` is enabled which allows the user to 
   configure external hardware (eg. DAC) into low-power mode further saving system power. In addition, the on-chip Application PLL may
-  be disabled (if used) which further saves core power rail drawn by the `xcore`.
+  be disabled (if used) which further saves power draw by the `xcore`.
 
 * **Using full-speed USB** Reduction of power through use of full speed USB rather than high-speed. This is important as it affects the PHY power consumed. ``lib_xua`` follows the standards and uses high-speed (480 Mbps) USB for Audio Class 2 and full-speed (12 Mbps) for Audio Class 1.
 
