@@ -137,6 +137,7 @@ impact was measured. These optimisations can be grouped into categories.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
   buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
+<<<<<<< HEAD
 * **Event-based buffering**
   Ensure that as few instructions as possible are executed in the audio buffering subsystem
   by only checking shared memory variables when needed through use of a channel event. The define ``CHAN_BUFF_CTRL`` is
@@ -144,6 +145,13 @@ impact was measured. These optimisations can be grouped into categories.
 
 * **XUD thread mode**
   Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
+=======
+* **Event-based buffering** Ensure that as few instructions as possible are executed in the audio buffering subsystem
+  by only checking shared memory variables when needed through use of a channel event. The define ``CHAN_BUFF_CTRL`` is
+  provided in ``lib_xua`` which enables this feature.
+
+* **XUD thread mode**  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
+>>>>>>> v2.1.0
   `HIGH PRIORITY` mode which ensures it always receives 1/5 of the tile MIPS. For further information about the operation
   of thread modes please refer to :ref:`further reading section<further_reading>` where you can find an appnote on this subject.
 
@@ -258,7 +266,6 @@ disables the I²S ports prior to this and the callback handler in this applicati
     :name: no_stream_optimisation
     :start-at: void AudioHwDeInit()
     :end-at: }
-
 
 Using full-speed USB
 ====================
@@ -401,8 +408,8 @@ Conclusion
 **********
 
 This application note shows how some simple design optimisations can be made to reduce overall
-power consumption when streaming audio by approximately 55% (or 62% if USB audio class 1 is used) compared with the 
-baseline USB audio class 2 reference design whilst still providing high-quality, bit-perfect USB audio streaming.
+power consumption, when streaming audio, by approximately 55% (or 62% if USB audio class 1 is used) compared with the 
+baseline USB audio class 2 reference design, whilst still providing high-quality, bit-perfect USB audio playback.
 
 A further 10% of ``xcore.ai`` chip power may be saved when the device is enumerated, but not streaming, with the addition
 of non-streaming power optimisations.
