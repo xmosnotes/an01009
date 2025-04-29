@@ -130,19 +130,28 @@ Optimisations
 A number of different optimisations were applied to the reference design and their
 impact was measured. These optimisations can be grouped into categories.
 
-* **Reducing frequencies** Execute all the software on one physical tile.
+* **Reducing frequencies**
+  Execute all the software on one physical tile.
   The `xcore` switch and other tile can both be slowed down. In this case, the frequency of tile[0]
   is reduced to 9 MHz which means it can still execute low speed tasks, such as I²C master.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
   buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
 
-* **Event-based buffering** Ensure that as few instructions as possible are executed in the audio buffering subsystem
+* **Event-based buffering**
+  Ensure that as few instructions as possible are executed in the audio buffering subsystem
   by only checking shared memory variables when needed through use of a channel event. The define ``CHAN_BUFF_CTRL`` is
   provided in ``lib_xua`` which enables this feature.
 
-* **XUD thread mode**  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
+* **XUD thread mode**
+  Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
   `HIGH PRIORITY` mode which ensures it always receives 1/5 of the tile MIPS. For further information about the operation
   of thread modes please refer to :ref:`further reading section<further_reading>` where you can find an appnote on this subject.
+
+* **Audio shutdown when not streaming**
+  By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the makefile, ``lib_xua`` supports shutting down of
+  the audiohub subsystem which includes I²S. An additional callback ``AudioHwDeInit()`` is enabled which allows the user to 
+  configure external hardware (eg. DAC) into low-power mode further saving system power. In addition, the on-chip Application PLL may
+  be disabled (if used) which further saves core power rail drawn by the `xcore`.
 
 * **Using full-speed USB** Reduction of power through use of full speed USB rather than high-speed. This is important as it affects the PHY power consumed. ``lib_xua`` follows the standards and uses high-speed (480 Mbps) USB for Audio Class 2 and full-speed (12 Mbps) for Audio Class 1.
 
@@ -231,6 +240,26 @@ are used on the XUD tile, the following define is set in the ``CMakeLists.txt``:
 
 Please see the :ref:`further reading section<further_reading>` for more information regarding xcore thread modes.
 
+Idle mode when not streaming
+============================
+
+By default ``lib_xua`` keeps I²S running even when audio is not streaming. This is useful when external systems rely on the
+audio clocks or features such as the audio mixer need to keep operating. For some applications, it is preferable to stop I²S
+and shutdown any associate audio hardware, which can be done using the following makefile setting::
+
+    -DXUA_LOW_POWER_NON_STREAMING=1
+
+The associated shutdown callback, which is enabled by this setting, can be seen populated for this application note below. Note ``lib_xua``
+disables the I²S ports prior to this and the callback handler in this application then disables the Application PLL which disables MCLK generation.
+
+
+ .. literalinclude:: ../../app_an01009/src/extensions/audiohw.xc
+    :language: c
+    :name: no_stream_optimisation
+    :start-at: void AudioHwDeInit()
+    :end-at: }
+
+
 Using full-speed USB
 ====================
 
@@ -271,8 +300,8 @@ DC-DC efficiency          90%                     90%
 **Total**                 **11 mW**               **22 mW**
 ========================= ======================= ======================
 
-Comparison of optimisations
-===========================
+Comparison of power optimisations
+=================================
 
 The tables below show the measured power consumption of `xcore.ai` running USB Audio
 reference design software with different optimisations. The calculated I/O power is added to get
@@ -297,17 +326,45 @@ Low-power, all optimisations, FS Class 1  73 mW       11 mW      84 mW
 ======================================== =========== ========== ========
 
 .. note::
+    The above powers *include* an estimated 90% efficiency for the DC-DC converters.
+    Consequently the chip power is around 10% lower than the values shown. By selecting a 
+    more efficient DC-DC converter, overall power consumption may be further reduced. 
+
+.. note::
     The additional power required to stream at 192 kHz (only possible with Class 2 - 96 kHz limit for Class 1)
-    is only a milliwatt or two. Likewise, when not streaming, power is similar because USB must stay alive.
+    is only a milliwatt or two.
+
+.. note::
+    In (device) receive only applications, such as USB audio output only sound cards, USB Tx
+    power in the USB PHY will be minimal.
+
+Idle (non-streaming) Audio
+--------------------------
+
+The additional power saved from non-streaming optimisations are limited because the `xcore` must
+still communicate with the USB host requiring the XUD tile to be clocked at full rate.
+However shutting down the audio subsystem, along with associated clocks,
+provides a useful chip power reduction of around 10% when audio playback is halted compared with streaming at 48 kHz.
+
+More significant system-power savings may be made however by using the non-streaming state callbacks to shut-down
+external hardware, such as the DAC.
+
+.. tabularcolumns:: lrrr
+
+======================================================= =========== ========== ========
+Configuration                                           Core Power  I/O Power  Total
+======================================================= =========== ========== ========
+FS Class 1, no idle optimisation, streaming @ 48kHz     73 mW       11 mW      84 mW
+FS Class 1, no idle optimisation, idle (no streaming)   72 mW       10 mW      82 mW
+FS Class 1, XUA idle optimisation, idle (no streaming)  64 mW       10 mW      74 mW
+======================================================= =========== ========== ========
 
 .. note::
     The above powers *include* an estimated 90% efficiency for the DC-DC converters.
     Consequently the chip power is around 10% lower than the values shown. By selecting a 
     more efficient DC-DC converter, overall power consumption may be further reduced. 
 
-.. note::
-    In (device) receive only applications, such as USB audio output only sound cards, USB Tx
-    power in the USB PHY will be minimal.
+
 
 **************************************
 Hardware for minimal power consumption
@@ -330,11 +387,13 @@ importance:
 * Replace the xcore.ai internal master clock PLL with an external MCLK source. This will save
   a few milliwatts of xcore power at the expense of the power used by the external oscillator.
 
+* Select a low-power DAC, or at a minimum, one that supports a low-power mode when not streaming.
+
 * Use a DC-DC to generate 3.3V from 5V (power requirements on 3V3 are very little, so an LDO may
   be more efficient).
 
 .. [#f1] Note this does *not* affect the secondary PLL output pin muxed with IO pin `X1D11` of
-   tile[1] which continues to operate.
+   tile[1] which continues to operate as MCLK output.
 
 
 **********
@@ -342,9 +401,11 @@ Conclusion
 **********
 
 This application note shows how some simple design optimisations can be made to reduce overall
-power consumption by approximately 55% (or 62% if USB audio class 1 is used) compared with the 
+power consumption when streaming audio by approximately 55% (or 62% if USB audio class 1 is used) compared with the 
 baseline USB audio class 2 reference design whilst still providing high-quality, bit-perfect USB audio streaming.
 
+A further 10% of ``xcore.ai`` chip power may be saved when the device is enumerated, but not streaming, with the addition
+of non-streaming power optimisations.
 
 .. _further_reading:
 
