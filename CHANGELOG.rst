@@ -1,6 +1,12 @@
 AN01009 change log
 ==================
 
+2.2.0
+-----
+
+  * ADDED: Support for power down of audio subsystem when
+           device is enumerated but host isn't streaming
+
 2.1.0
 -----
 
