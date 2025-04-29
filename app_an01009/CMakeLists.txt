@@ -6,8 +6,8 @@ set(APP_HW_TARGET xk-audio-316-mc-tile1.xn)
 
 # Use sw_usb_audio deps and add lib_awe
 
-set(APP_DEPENDENT_MODULES "lib_xua(feature/no_stream_power_simpl)" # TODO changeme when merged/released
-                          "lib_board_support(1.2.2)"
+set(APP_DEPENDENT_MODULES "ed-xmos/lib_xua(feature/no_stream_power_simpl)" # TODO changeme when merged/released
+                          "lib_board_support(1.2.2)" # TODO this needs bumping too when sw_pll dep is released
                           )
 
 set(APP_PCA_ENABLE ON)
