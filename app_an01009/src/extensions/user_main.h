@@ -14,7 +14,7 @@ extern unsafe client interface i2c_master_if i_i2c_client;
 extern void board_setup();
 extern void power_down();
 
-#ifdef LOW_POWER_ENABLE
+#if LOW_POWER_ENABLE
 /* Call the clock power down code */
 #define POWER_DOWN() power_down()
 #else
