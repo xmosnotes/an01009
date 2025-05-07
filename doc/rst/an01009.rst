@@ -148,7 +148,7 @@ impact was measured. These optimisations can be grouped into categories.
   of thread modes please refer to :ref:`further reading section<further_reading>` where you can find an appnote on this subject.
 
 * **Audio shutdown when idle**
-  By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the makefile, ``lib_xua`` supports shutting down of
+  By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the ``CMakeLists.txt`` makefile, ``lib_xua`` supports shutting down of
   the audiohub subsystem which includes I²S. An additional callback ``AudioHwDeInit()`` is enabled which allows the user to 
   configure external hardware (eg. DAC) into low-power mode further saving system power. In addition, the on-chip Application PLL may
   be disabled (if used) which further saves power draw by the `xcore`.
@@ -330,7 +330,7 @@ Low-power, all optimisations, FS Class 1  73 mW       11 mW      84 mW
     more efficient DC-DC converter, overall power consumption may be further reduced. 
 
 .. note::
-    The additional power required to stream at 192 kHz (only possible with Class 2 - 96 kHz limit for Class 1)
+    The additional power required to stream at 192 kHz, 24 bit (only possible with Class 2 - 96 kHz, 24 bit limit for Class 1)
     is only a milliwatt or two.
 
 .. note::
