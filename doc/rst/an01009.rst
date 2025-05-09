@@ -139,7 +139,7 @@ impact was measured. These optimisations can be grouped into categories.
 
 * **Event-based buffering**
   Ensure that as few instructions as possible are executed in the audio buffering subsystem
-  by only checking shared memory variables when needed through use of a channel event. The define ``CHAN_BUFF_CTRL`` is
+  by only checking shared memory variables when needed through use of a channel event. The define ``XUA_CHAN_BUFF_CTRL`` is
   provided in ``lib_xua`` which enables this feature.
 
 * **XUD thread mode**
@@ -149,7 +149,7 @@ impact was measured. These optimisations can be grouped into categories.
 
 * **Audio shutdown when idle**
   By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the ``CMakeLists.txt`` makefile, ``lib_xua`` supports shutting down of
-  the audiohub subsystem which includes I²S. An additional callback ``AudioHwDeInit()`` is enabled which allows the user to 
+  the audiohub subsystem which includes I²S. An additional callback ``AudioHwShutdown()`` is enabled which allows the user to 
   configure external hardware (eg. DAC) into low-power mode further saving system power. In addition, the on-chip Application PLL may
   be disabled (if used) which further saves power draw by the `xcore`.
 
@@ -214,7 +214,7 @@ however simpler designs such as DACs, microphones or headphones can safely enabl
 
 The following define in the application CMake file enables the event-based audio buffer::
 
-    -DCHAN_BUFF_CTRL=1
+    -DXUA_CHAN_BUFF_CTRL=1
 
 
 XUD thread mode
@@ -256,7 +256,7 @@ disables the I²S ports prior to this and the callback handler in this applicati
  .. literalinclude:: ../../app_an01009/src/extensions/audiohw.xc
     :language: c
     :name: no_stream_optimisation
-    :start-at: void AudioHwDeInit()
+    :start-at: void AudioHwShutdown()
     :end-at: }
 
 Using full-speed USB

@@ -44,7 +44,7 @@ void AudioHwInit()
 }
 
 /* Configures the external audio hardware when not streaming. Called from tile[1] */
-void AudioHwDeInit()
+void AudioHwShutdown()
 {
     /* First need to bring switch frequency up before we access PLL registers */
     switch_power_up();
