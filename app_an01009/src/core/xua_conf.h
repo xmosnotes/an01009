@@ -48,6 +48,10 @@
 #define MIN_FREQ           (48000)
 #endif
 
+#ifndef LOW_POWER_ENABLE
+#define LOW_POWER_ENABLE   (0)
+#endif
+
 #if LOW_POWER_ENABLE
 #define AUDIO_CLASS        (1)
 #else

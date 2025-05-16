@@ -8,15 +8,17 @@
 #include <xs1.h>
 #include <platform.h>
 #include "xk_audio_316_mc_ab/board.h"
+#include "power_down.h"
 
 /* Board hardware setup */
 extern unsafe client interface i2c_master_if i_i2c_client;
+
 extern void board_setup();
-extern void power_down();
+
 
 #if LOW_POWER_ENABLE
 /* Call the clock power down code */
-#define POWER_DOWN() power_down()
+#define POWER_DOWN() power_down_unused_tile()
 #else
 /* Do nothing */
 #define POWER_DOWN()
@@ -29,13 +31,13 @@ extern void power_down();
 
 #define USER_MAIN_CORES                                                 \
     on tile[0]: {                                                       \
+        enable_core_divider();                                          \
         board_setup();                                                  \
-        par {                                                           \
-            i2c_master(i2c, 1, p_scl, p_sda, 100);                      \
-            POWER_DOWN();                                               \
-        }                                                               \
+        POWER_DOWN();                                                   \
+        i2c_master(i2c, 1, p_scl, p_sda, 100);                          \
     }                                                                   \
     on tile[1]: {                                                       \
+        enable_core_divider();                                          \
         unsafe                                                          \
         {                                                               \
             i_i2c_client = i2c[0];                                      \

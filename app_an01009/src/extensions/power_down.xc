@@ -1,32 +1,140 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <platform.h>
+#include <print.h>
+#include "xassert.h"
+#include "power_down.h"
 
-
-void switch_power_down()
+static void switch_power_down(void)
 {
-    // Reduce switch clock frequency
-    write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, 4);
+    write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, (LP_SWITCH_DIV - 1));
 }
 
-void switch_power_up()
+static void switch_power_up(void)
 {
-    // Reset switch clock frequency
-    write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, 0);
+    write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, (1 - 1)); // Divide by 1
 }
 
-void power_down()
-{
-    // Give the software 10 seconds to start up, then apply power optimisations below.
-    delay_seconds(10);
 
+void set_core_clock_divider(tileref t, unsigned div){
+    write_pswitch_reg(get_tile_id(t), XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, div - 1);
+}
+
+
+void enable_core_divider(void)
+{
+    // First ensure we have initialised core divider to /1 so no nasty surprises when enbaling the divider
+    if(get_local_tile_id() == get_tile_id(tile[0])){
+        set_core_clock_divider(tile[0], 1);
+    } else if (get_local_tile_id() == get_tile_id(tile[1])){
+        set_core_clock_divider(tile[1], 1);
+    }
+
+    unsigned val = getps(XS1_PS_XCORE_CTRL0);
+    setps(XS1_PS_XCORE_CTRL0, val | (1 << 4)); // Set enable divider bit
+}
+
+
+
+void disable_core_clock(tileref t){
+    write_tile_config_reg(t, XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, 0x80000000);
+}
+
+
+void power_down_unused_tile(void)
+{
     switch_power_down();
+    // Reduce tile 0 clock frequency
+    set_core_clock_divider(tile[0], LP_XCORE_DIV);
+    // Note, to completely disable, use disable_core_clock(). We need I2C active in this example so not possible
+}
 
-	// Reduce core 0 clock frequency (to 9 MHz)
-    write_tile_config_reg(tile[0], XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, 0x00000040);
-    // Note, to completely disable, use:
-    // write_tile_config_reg(tile[0], XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, 0x80000000);
 
-    // Enable the clock divider for the core clock
-    setps(XS1_PS_XCORE_CTRL0, 1 << 4);
+void power_up_unused_tile(void)
+{
+    // Use divide by 1 for switch and unused tile
+    switch_power_up();
+    set_core_clock_divider(tile[0], 1);
+}
+
+
+// Whole chip power down VCO @ 1MHz, output @ 0.125MHz. This sets the VCO to near off power whilst still operating
+// R = 24, F = 1, OD = 8
+#define PLL_CTL_VCO1_BYPASS  0x93800117 // Don't reset, in bypass, VCO @ 1MHz, output @ 0.125MHz.
+
+unsigned pllCtrlVal = 0; // State for entry/exit to PLL off mode
+
+void pll_bypass_on(void) {
+    // Grab original setting once only
+    if(pllCtrlVal == 0){
+        read_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_PLL_CTL_NUM, pllCtrlVal);
+    }
+    // Enable bypass and power VCO down
+    write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_PLL_CTL_NUM, PLL_CTL_VCO1_BYPASS);
+}
+
+
+// Note this takes up to 500us to resume. Chip will not be clocked until PLL is stable
+// May be called from either tile
+void pll_bypass_off(void) {
+    if(pllCtrlVal == 0){
+        return; // we haven't done bypass_on yet
+    }
+    // Set old value stored by pll_bypass_on
+    unsigned new_val = pllCtrlVal;
+    new_val &= ~0x40000000; // Ensure we wait for PLL lock
+    new_val |= 0x80000000; // Do not reset chip on PLL write
+
+    write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_PLL_CTL_NUM, new_val);
+}
+
+#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. This will be required to reach the suspend target but is currenlty sometimes unreliable
+                                     // If not set, we just use the clock dividers which are robust, but do not meet suspend targets
+
+
+// Called from XUA EP0
+int HostActiveOnce = 0; // Have we been configured at all. This flag works around an issue where we see many suspends at startup, which means calls to LP break enumeration
+
+void SuspendPowerDown()
+{
+    if(HostActiveOnce){
+        printstr("powerDown cb start\n");
+#if BYPASS_PLL_DURING_SUSPEND
+        // First disable the active mode power down dividers for the unused tile[0]
+        power_up_unused_tile();
+        delay_microseconds(500); // TODO - this is needed for pll_bypass to be robust
+        pll_bypass_on();
+        set_core_clock_divider(tile[0], 10); // More power down 24 -> 2.4
+        set_core_clock_divider(tile[1], 10);
+        switch_power_down();
+#else
+        // Clock chip down as much as possible whilst keeping core PLL running
+        // Reduce tile[1] clock frequency. Note tile[0] and switch aready prescaled
+        set_core_clock_divider(tile[1], LP_XCORE_DIV);
+#endif
+    }
+}
+
+void SuspendPowerUp()
+{
+
+    if(HostActiveOnce){
+#if BYPASS_PLL_DURING_SUSPEND
+        set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
+        set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
+        pll_bypass_off();           // Set PLL running at normal rate set by XN file
+        power_down_unused_tile();   // Power tile[0] down for active mode
+#else
+        set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
+#endif
+        printstr("powerUp cb complete\n");
+    }
+}
+
+
+// TMP workaround
+void UserHostActive(int active)
+{
+    printstr("UserHostActive ");printintln(active);
+    HostActiveOnce = 1;
 }

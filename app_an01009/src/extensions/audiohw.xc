@@ -6,10 +6,7 @@
 extern "C" {
     #include "sw_pll.h"
 }
-
-/* Provided by power_down.xc */
-extern void switch_power_down();
-extern void switch_power_up();
+#include "power_down.h"
 
 /* This is the audio hardware setup file. In this case we are bringing in lib_board_support and
    calling the hardware functions provided by that for the XU316 MC Audio (1v1) platform */
@@ -36,26 +33,45 @@ void board_setup()
 /* Configures the external audio hardware at startup. Called from tile[1] */
 void AudioHwInit()
 {
+    if(LOW_POWER_ENABLE){
+        power_up_unused_tile();
+    }
+    printstr("AudioHwInit\n");
     unsafe{
         /* Wait until global is set */
         while(!(unsigned) i_i2c_client);
         xk_audio_316_mc_ab_AudioHwInit((client interface i2c_master_if)i_i2c_client, board_config);
+    }
+    if(LOW_POWER_ENABLE){
+        power_down_unused_tile();
     }
 }
 
 /* Configures the external audio hardware when not streaming. Called from tile[1] */
 void AudioHwShutdown()
 {
-    /* First need to bring switch frequency up before we access PLL registers */
-    switch_power_up();
+    /* First need to bring switch frequency up before we access PLL registers if powered down */
+    if(LOW_POWER_ENABLE){
+        power_up_unused_tile();
+    }
+    printstr("AudioHwShutdown\n");
     sw_pll_fixed_clock(0);
-    switch_power_down();
+    if(LOW_POWER_ENABLE){
+        power_down_unused_tile();
+    }
 }
 
 /* Configures the external audio hardware for the required sample frequency. Called from tile[1] */
 void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned sampRes_DAC, unsigned sampRes_ADC)
 {
+    if(LOW_POWER_ENABLE){
+        power_up_unused_tile();
+    }
+    printstr("AudioHwConfig ");printintln(samFreq);
     unsafe {
         xk_audio_316_mc_ab_AudioHwConfig((client interface i2c_master_if)i_i2c_client, board_config, samFreq, mClk, dsdMode, sampRes_DAC, sampRes_ADC);
+    }
+    if(LOW_POWER_ENABLE){
+        power_down_unused_tile();
     }
 }
