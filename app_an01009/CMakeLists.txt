@@ -4,7 +4,7 @@ project(app_an01009)
 
 set(APP_HW_TARGET xk-audio-316-mc-tile1.xn)
 
-set(APP_DEPENDENT_MODULES "xmos/lib_xua(feature/develop)" # TODO changeme when merged/released
+set(APP_DEPENDENT_MODULES "xmos/lib_xua(develop)" # TODO changeme when merged/released
                           "lib_board_support(1.2.2)" # TODO this needs bumping too when sw_pll dep is released
                           )
                           
