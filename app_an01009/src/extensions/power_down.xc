@@ -15,15 +15,15 @@ static void switch_power_up(void)
     write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, (1 - 1)); // Divide by 1
 }
 
-
-void set_core_clock_divider(tileref t, unsigned div){
+void set_core_clock_divider(tileref t, unsigned div)
+{
     write_pswitch_reg(get_tile_id(t), XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, div - 1);
 }
 
-
+/* Called from main() on each tile - see user_main.h */
 void enable_core_divider(void)
 {
-    // First ensure we have initialised core divider to /1 so no nasty surprises when enbaling the divider
+    // First ensure we have initialised core divider to /1 so no nasty surprises when enabling the divider
     if(get_local_tile_id() == get_tile_id(tile[0])){
         set_core_clock_divider(tile[0], 1);
     } else if (get_local_tile_id() == get_tile_id(tile[1])){
@@ -34,27 +34,24 @@ void enable_core_divider(void)
     setps(XS1_PS_XCORE_CTRL0, val | (1 << 4)); // Set enable divider bit
 }
 
-
-
-void disable_core_clock(tileref t){
+void disable_core_clock(tileref t)
+{
     write_tile_config_reg(t, XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, 0x80000000);
 }
 
-
-void power_down_unused_tile(void)
+void power_down_tile(int t)
 {
     switch_power_down();
     // Reduce tile 0 clock frequency
-    set_core_clock_divider(tile[0], LP_XCORE_DIV);
+    set_core_clock_divider(tile[t], LP_XCORE_DIV);
     // Note, to completely disable, use disable_core_clock(). We need I2C active in this example so not possible
 }
 
-
-void power_up_unused_tile(void)
+void power_up_tile(int t)
 {
     // Use divide by 1 for switch and unused tile
     switch_power_up();
-    set_core_clock_divider(tile[0], 1);
+    set_core_clock_divider(tile[t], 1);
 }
 
 
@@ -88,20 +85,29 @@ void pll_bypass_off(void) {
     write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_PLL_CTL_NUM, new_val);
 }
 
-#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. This will be required to reach the suspend target but is currenlty sometimes unreliable
+#ifndef BYPASS_PLL_DURING_SUSPEND
+#define BYPASS_PLL_DURING_SUSPEND  0 // Experimental. This will be required to reach the suspend target but is currenlty sometimes unreliable
                                      // If not set, we just use the clock dividers which are robust, but do not meet suspend targets
-
+#endif
 
 // Called from XUA EP0
-int HostActiveOnce = 0; // Have we been configured at all. This flag works around an issue where we see many suspends at startup, which means calls to LP break enumeration
+int HostActiveOnce = !BYPASS_PLL_DURING_SUSPEND; // Have we been configured at all. This flag works around an issue where we see many suspends at startup, which means calls to LP break enumeration
 
-void SuspendPowerDown()
+extern unsafe chanend g_c_board_ctrl;
+
+/* Called from Endpoint 0 - running on tile[1] in this application*/
+void XUA_UserSuspendPowerDown()
 {
     if(HostActiveOnce){
         printstr("powerDown cb start\n");
+        unsafe
+        {
+           /* Tell remote task to disable board power */
+            g_c_board_ctrl <: 0;
+        }
 #if BYPASS_PLL_DURING_SUSPEND
         // First disable the active mode power down dividers for the unused tile[0]
-        power_up_unused_tile();
+        power_up_tile(0);
         delay_microseconds(500); // TODO - this is needed for pll_bypass to be robust
         pll_bypass_on();
         set_core_clock_divider(tile[0], 10); // More power down 24 -> 2.4
@@ -115,15 +121,20 @@ void SuspendPowerDown()
     }
 }
 
-void SuspendPowerUp()
+/* Called from Endpoint 0 - running on tile[1] in this application */
+void XUA_UserSuspendPowerUp()
 {
-
     if(HostActiveOnce){
+        unsafe
+        {
+           /* Tell remote task to enable board power */
+           g_c_board_ctrl  <: 1;
+        }
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
-        pll_bypass_off();           // Set PLL running at normal rate set by XN file
-        power_down_unused_tile();   // Power tile[0] down for active mode
+        pll_bypass_off();                   // Set PLL running at normal rate set by XN file
+        power_down_tile(0);                 // Power tile[0] down for active mode
 #else
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
 #endif
@@ -131,10 +142,11 @@ void SuspendPowerUp()
     }
 }
 
-
 // TMP workaround
 void UserHostActive(int active)
 {
     printstr("UserHostActive ");printintln(active);
-    HostActiveOnce = 1;
+
+    if(BYPASS_PLL_DURING_SUSPEND)
+        HostActiveOnce = 1;
 }

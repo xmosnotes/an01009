@@ -11,7 +11,6 @@
 // The core clock divider is initialised to 1 (no division)
 void enable_core_divider(void);
 
-
 // Set xcore processor clock divider from PLL output
 void set_core_clock_divider(tileref t, unsigned divider);
 
@@ -19,14 +18,13 @@ void set_core_clock_divider(tileref t, unsigned divider);
 // May be called from either tile but if switching off own tile, execution will halt in this function
 void disable_core_clock(tileref t);
 
-
-// Turns down core clock on tile[0] and switch clock
+// Turns down core clock on tile[t] and switch clock
 // May be called from either tile
-void power_down_unused_tile(void);
+void power_down_tile(int t);
 
-// Restores core clock on tile[0] and switch clock
+// Restores core clock on tile[t] and switch clock
 // May be called from either tile
-void power_up_unused_tile(void);
+void power_up_tile(int t);
 
 
 // Sets XTAL to go straight to chip (nominally 24 MHz). Stores current setting for pll_bypass_off()

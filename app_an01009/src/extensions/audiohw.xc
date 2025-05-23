@@ -1,6 +1,8 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
+#include <print.h>
+
 #include "xua.h"
 #include "xk_audio_316_mc_ab/board.h"
 extern "C" {
@@ -24,17 +26,36 @@ static xk_audio_316_mc_ab_config_t board_config =
 
 unsafe client interface i2c_master_if i_i2c_client;
 
-/* Board setup for XU316 MC Audio (1v1). Not called from tile[0] */
-void board_setup()
+unsafe chanend g_c_board_ctrl;
+
+/* Board setup for XU316 MC Audio (1v1). Called from tile[0] */
+/* Provides "remote" access to the "ctrl" port on tile[0] */
+[[combinable]]
+void board_ctrl(chanend c_board_ctrl)
 {
+    int enable;
     xk_audio_316_mc_ab_board_setup(board_config);
+
+    while(1)
+    {
+        select
+        {
+            case c_board_ctrl :> enable:
+
+                if(enable)
+                    xk_audio_316_mc_ab_board_setup(board_config);
+                else
+                    xk_audio_316_mc_ab_AudioHwShutdown();
+                break;
+        }
+    }
 }
 
 /* Configures the external audio hardware at startup. Called from tile[1] */
 void AudioHwInit()
 {
     if(LOW_POWER_ENABLE){
-        power_up_unused_tile();
+        power_up_tile(0);
     }
     printstr("AudioHwInit\n");
     unsafe{
@@ -43,7 +64,7 @@ void AudioHwInit()
         xk_audio_316_mc_ab_AudioHwInit((client interface i2c_master_if)i_i2c_client, board_config);
     }
     if(LOW_POWER_ENABLE){
-        power_down_unused_tile();
+        power_down_tile(0);
     }
 }
 
@@ -52,12 +73,12 @@ void AudioHwShutdown()
 {
     /* First need to bring switch frequency up before we access PLL registers if powered down */
     if(LOW_POWER_ENABLE){
-        power_up_unused_tile();
+        power_up_tile(0);
     }
     printstr("AudioHwShutdown\n");
     sw_pll_fixed_clock(0);
     if(LOW_POWER_ENABLE){
-        power_down_unused_tile();
+        power_down_tile(0);
     }
 }
 
@@ -65,13 +86,13 @@ void AudioHwShutdown()
 void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned sampRes_DAC, unsigned sampRes_ADC)
 {
     if(LOW_POWER_ENABLE){
-        power_up_unused_tile();
+        power_up_tile(0);
     }
     printstr("AudioHwConfig ");printintln(samFreq);
     unsafe {
         xk_audio_316_mc_ab_AudioHwConfig((client interface i2c_master_if)i_i2c_client, board_config, samFreq, mClk, dsdMode, sampRes_DAC, sampRes_ADC);
     }
     if(LOW_POWER_ENABLE){
-        power_down_unused_tile();
+        power_down_tile(0);
     }
 }
