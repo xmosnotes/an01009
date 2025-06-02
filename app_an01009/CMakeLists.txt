@@ -4,11 +4,10 @@ project(app_an01009)
 
 set(APP_HW_TARGET xk-audio-316-mc-tile1.xn)
 
-# Use sw_usb_audio deps and add lib_awe
-set(APP_DEPENDENT_MODULES "lib_xua(5.0.0)"
-                          "lib_board_support(1.2.2)"
+set(APP_DEPENDENT_MODULES "xmos/lib_xua(develop)" # TODO changeme when merged/released
+                          "lib_board_support(1.2.2)" # TODO this needs bumping too when sw_pll dep is released
                           )
-
+                          
 set(APP_PCA_ENABLE ON)
 
 set(COMMON_COMPILER_FLAGS   -fcomment-asm
@@ -26,8 +25,9 @@ set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS})
 
 set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
                             -DLOW_POWER_ENABLE=1
-                            -DCHAN_BUFF_CTRL=1
+                            -DXUA_CHAN_BUFF_CTRL=1
                             -DXUD_PRIORITY_HIGH=1
+                            -DXUA_LOW_POWER_NON_STREAMING=1
                             )
 
 set(APP_INCLUDES    src

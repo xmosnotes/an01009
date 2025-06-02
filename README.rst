@@ -5,7 +5,7 @@ AN01009: Optimising USB Audio for stereo output, battery powered devices
 ########################################################################
 
 :vendor: XMOS
-:version: 2.0.0
+:version: 2.2.0
 :scope: Example
 :description: How to reduce the power of USB audio designs
 :category: Audio
@@ -36,7 +36,7 @@ Known issues
 Required tools
 **************
 
-* XMOS XTC Tools: 15.3.0
+* XMOS XTC Tools: 15.3.1
 
 *********************************
 Required libraries (dependencies)

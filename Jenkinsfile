@@ -10,12 +10,12 @@ pipeline {
     parameters {
         string(
             name: 'TOOLS_VERSION',
-            defaultValue: '15.3.0',
+            defaultValue: '15.3.1',
             description: 'XTC tools version'
         )
         string(
             name: 'XMOSDOC_VERSION',
-            defaultValue: 'v6.2.0',
+            defaultValue: 'v7.0.0',
             description: 'xmosdoc version'
         )
     }
