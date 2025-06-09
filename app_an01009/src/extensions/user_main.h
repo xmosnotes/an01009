@@ -18,14 +18,6 @@ extern unsafe chanend g_c_board_ctrl;
 [[combinable]]
 void board_ctrl(chanend c_board_ctrl);
 
-#if LOW_POWER_ENABLE
-/* Call the clock power down code */
-#define POWER_DOWN() power_down_tile(0)
-#else
-/* Do nothing */
-#define POWER_DOWN()
-#endif
-
 /* Declarations that will be inserted in main.xc from lib_xua */
 #define USER_MAIN_DECLARATIONS                                          \
     interface i2c_master_if i2c[1];                                     \
@@ -35,7 +27,6 @@ void board_ctrl(chanend c_board_ctrl);
 #define USER_MAIN_CORES                                                 \
     on tile[0]: {                                                       \
         enable_core_divider();                                          \
-        POWER_DOWN();                                                   \
         [[combine]]                                                     \
         par                                                             \
         {                                                               \
