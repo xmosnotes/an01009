@@ -94,12 +94,12 @@ void pll_bypass_off(void) {
 
 // Called from XUA EP0
 int HostActiveOnce = !BYPASS_PLL_DURING_SUSPEND; // Have we been configured at all. This flag works around an issue where we see many suspends at startup, which means calls to LP break enumeration
-
+int inLowPower = 0; // Are we in low power. THis flag works around incomplete suspend/resume requests sometimes seen
 
 /* Called from Endpoint 0 - running on tile[1] in this application*/
 void XUA_UserSuspendPowerDown()
 {
-    if(HostActiveOnce){
+    if(LOW_POWER_ENABLE && HostActiveOnce && !inLowPower){
         printstr("powerDown cb start\n");
 #if BYPASS_PLL_DURING_SUSPEND
         // First disable the active mode power down dividers for the unused tile[0]
@@ -115,13 +115,14 @@ void XUA_UserSuspendPowerDown()
         set_core_clock_divider(tile[1], LP_XCORE_DIV);
 #endif
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_REDUCE);
+        inLowPower = 1;
     }
 }
 
 /* Called from Endpoint 0 - running on tile[1] in this application */
 void XUA_UserSuspendPowerUp()
 {
-    if(HostActiveOnce){
+    if(LOW_POWER_ENABLE && HostActiveOnce && inLowPower){
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_NOMINAL);
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
@@ -131,6 +132,7 @@ void XUA_UserSuspendPowerUp()
 #else
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
 #endif
+        inLowPower = 0;
         printstr("powerUp cb complete\n");
     }
 }
