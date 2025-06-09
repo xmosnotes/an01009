@@ -23,7 +23,8 @@ set(COMMON_COMPILER_FLAGS   -fcomment-asm
                             -DXUA_QUAD_SPI_FLASH=1
                             )
 
-set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS} -DAUDIO_CLASS=2)
+set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS}
+                            -DAUDIO_CLASS=2)
 
 set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
                             -DLOW_POWER_ENABLE=1

@@ -36,11 +36,9 @@ void AudioHwInit()
     if(LOW_POWER_ENABLE){
         power_up_tile(0);
     }
-    unsafe
-    {
-       /* Tell remote task to enable board power */
-       g_c_board_ctrl  <: BOARD_CTL_BOARD_SETUP;
-    }
+    delay_microseconds(10); // TODO needed to ensure stability on boot
+    /* Tell remote task to enable board power */
+    send_board_ctrl_cmd(BOARD_CTL_BOARD_SETUP);
     printstr("AudioHwInit\n");
     unsafe{
         /* Wait until global is set */
@@ -64,11 +62,8 @@ void AudioHwShutdown()
     if(LOW_POWER_ENABLE){
         power_down_tile(0);
     }
-    unsafe
-    {
-       /* Tell remote task to disable board power */
-        g_c_board_ctrl <: BOARD_CTL_AUDIO_HW_SHUTDOWN;
-    }
+    /* Tell remote task to disable board power */
+    send_board_ctrl_cmd(BOARD_CTL_AUDIO_HW_SHUTDOWN);
 }
 
 /* Configures the external audio hardware for the required sample frequency. Called from tile[1] */
@@ -87,14 +82,16 @@ void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned s
 }
 
 /* Remote board server and thread safe client function */
-unsafe chanend g_c_board_ctrl;
+unsafe chanend g_c_board_ctrl = null;
 swlock_t bc_swlock = SWLOCK_INITIAL_VALUE;
 
 void send_board_ctrl_cmd(board_ctrl_cmd_t cmd)
 {
     unsafe{
         swlock_acquire(bc_swlock);
+        while((int)g_c_board_ctrl == 0); // Ensure it is initialised
         g_c_board_ctrl <: cmd;
+        g_c_board_ctrl :> int _; // Synch back to ensure it is complete at server end
         swlock_release(bc_swlock);
     }
 }
@@ -103,6 +100,7 @@ void send_board_ctrl_cmd(board_ctrl_cmd_t cmd)
 void board_ctrl(chanend c_board_ctrl)
 {
     board_ctrl_cmd_t cmd;
+    xk_audio_316_mc_ab_board_setup(board_config); // Start with board powered up
 
     while(1)
     {
@@ -125,6 +123,7 @@ void board_ctrl(chanend c_board_ctrl)
                     default:
                         break;
                 }
+                c_board_ctrl <: cmd;
                 break;
         }
     }
