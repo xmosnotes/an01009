@@ -4,6 +4,8 @@
 #include <print.h>
 #include "xassert.h"
 #include "power_down.h"
+#include "audiohw_shared.h"
+
 
 static void switch_power_down(void)
 {
@@ -86,7 +88,7 @@ void pll_bypass_off(void) {
 }
 
 #ifndef BYPASS_PLL_DURING_SUSPEND
-#define BYPASS_PLL_DURING_SUSPEND  0 // Experimental. This will be required to reach the suspend target but is currenlty sometimes unreliable
+#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. This will be required to reach the suspend target but is currenlty sometimes unreliable
                                      // If not set, we just use the clock dividers which are robust, but do not meet suspend targets
 #endif
 
@@ -112,6 +114,7 @@ void XUA_UserSuspendPowerDown()
         // Reduce tile[1] clock frequency. Note tile[0] and switch aready prescaled
         set_core_clock_divider(tile[1], LP_XCORE_DIV);
 #endif
+        send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_REDUCE);
     }
 }
 
@@ -119,6 +122,7 @@ void XUA_UserSuspendPowerDown()
 void XUA_UserSuspendPowerUp()
 {
     if(HostActiveOnce){
+        send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_NOMINAL);
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again

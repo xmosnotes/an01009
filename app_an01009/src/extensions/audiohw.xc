@@ -8,7 +8,12 @@
 extern "C" {
     #include "sw_pll.h"
 }
+#include "swlock.h"
 #include "power_down.h"
+#include "audiohw_shared.h"
+
+
+unsafe client interface i2c_master_if i_i2c_client;
 
 /* This is the audio hardware setup file. In this case we are bringing in lib_board_support and
    calling the hardware functions provided by that for the XU316 MC Audio (1v1) platform */
@@ -24,31 +29,6 @@ static xk_audio_316_mc_ab_config_t board_config =
     I2S_CHANS_PER_FRAME     // i2s_chans_per_frame, 2 for I2S
 };
 
-unsafe client interface i2c_master_if i_i2c_client;
-
-unsafe chanend g_c_board_ctrl;
-
-/* Board setup for XU316 MC Audio (1v1). Called from tile[0] */
-/* Provides "remote" access to the "ctrl" port on tile[0] */
-[[combinable]]
-void board_ctrl(chanend c_board_ctrl)
-{
-    int enable;
-    
-    while(1)
-    {
-        select
-        {
-            case c_board_ctrl :> enable:
-
-                if(enable)
-                    xk_audio_316_mc_ab_board_setup(board_config);
-                else
-                    xk_audio_316_mc_ab_AudioHwShutdown();
-                break;
-        }
-    }
-}
 
 /* Configures the external audio hardware at startup. Called from tile[1] */
 void AudioHwInit()
@@ -59,7 +39,7 @@ void AudioHwInit()
     unsafe
     {
        /* Tell remote task to enable board power */
-       g_c_board_ctrl  <: 1;
+       g_c_board_ctrl  <: BOARD_CTL_BOARD_SETUP;
     }
     printstr("AudioHwInit\n");
     unsafe{
@@ -87,7 +67,7 @@ void AudioHwShutdown()
     unsafe
     {
        /* Tell remote task to disable board power */
-        g_c_board_ctrl <: 0;
+        g_c_board_ctrl <: BOARD_CTL_AUDIO_HW_SHUTDOWN;
     }
 }
 
@@ -103,5 +83,49 @@ void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned s
     }
     if(LOW_POWER_ENABLE){
         power_down_tile(0);
+    }
+}
+
+/* Remote board server and thread safe client function */
+unsafe chanend g_c_board_ctrl;
+swlock_t bc_swlock = SWLOCK_INITIAL_VALUE;
+
+void send_board_ctrl_cmd(board_ctrl_cmd_t cmd)
+{
+    unsafe{
+        swlock_acquire(bc_swlock);
+        g_c_board_ctrl <: cmd;
+        swlock_release(bc_swlock);
+    }
+}
+
+[[combinable]]
+void board_ctrl(chanend c_board_ctrl)
+{
+    board_ctrl_cmd_t cmd;
+
+    while(1)
+    {
+        select
+        {
+            case c_board_ctrl :> cmd:
+                switch(cmd) {
+                    case BOARD_CTL_BOARD_SETUP:
+                        xk_audio_316_mc_ab_board_setup(board_config);
+                        break;
+                    case BOARD_CTL_AUDIO_HW_SHUTDOWN:
+                        xk_audio_316_mc_ab_AudioHwShutdown();
+                        break;
+                    case BOARD_CTL_XCORE_VOLTAGE_NOMINAL:
+                        xk_audio_316_mc_ab_core_voltage_reduce(0);
+                        break;
+                    case BOARD_CTL_XCORE_VOLTAGE_REDUCE:
+                        xk_audio_316_mc_ab_core_voltage_reduce(1);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
     }
 }

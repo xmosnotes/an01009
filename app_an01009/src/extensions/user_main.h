@@ -12,7 +12,6 @@
 
 /* Board hardware setup */
 extern unsafe client interface i2c_master_if i_i2c_client;
-
 extern unsafe chanend g_c_board_ctrl;
 
 [[combinable]]
