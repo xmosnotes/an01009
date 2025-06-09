@@ -93,18 +93,12 @@ void pll_bypass_off(void) {
 // Called from XUA EP0
 int HostActiveOnce = !BYPASS_PLL_DURING_SUSPEND; // Have we been configured at all. This flag works around an issue where we see many suspends at startup, which means calls to LP break enumeration
 
-extern unsafe chanend g_c_board_ctrl;
 
 /* Called from Endpoint 0 - running on tile[1] in this application*/
 void XUA_UserSuspendPowerDown()
 {
     if(HostActiveOnce){
         printstr("powerDown cb start\n");
-        unsafe
-        {
-           /* Tell remote task to disable board power */
-            g_c_board_ctrl <: 0;
-        }
 #if BYPASS_PLL_DURING_SUSPEND
         // First disable the active mode power down dividers for the unused tile[0]
         power_up_tile(0);
@@ -125,11 +119,6 @@ void XUA_UserSuspendPowerDown()
 void XUA_UserSuspendPowerUp()
 {
     if(HostActiveOnce){
-        unsafe
-        {
-           /* Tell remote task to enable board power */
-           g_c_board_ctrl  <: 1;
-        }
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again

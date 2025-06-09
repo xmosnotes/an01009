@@ -34,8 +34,7 @@ unsafe chanend g_c_board_ctrl;
 void board_ctrl(chanend c_board_ctrl)
 {
     int enable;
-    xk_audio_316_mc_ab_board_setup(board_config);
-
+    
     while(1)
     {
         select
@@ -56,6 +55,11 @@ void AudioHwInit()
 {
     if(LOW_POWER_ENABLE){
         power_up_tile(0);
+    }
+    unsafe
+    {
+       /* Tell remote task to enable board power */
+       g_c_board_ctrl  <: 1;
     }
     printstr("AudioHwInit\n");
     unsafe{
@@ -79,6 +83,11 @@ void AudioHwShutdown()
     sw_pll_fixed_clock(0);
     if(LOW_POWER_ENABLE){
         power_down_tile(0);
+    }
+    unsafe
+    {
+       /* Tell remote task to disable board power */
+        g_c_board_ctrl <: 0;
     }
 }
 
