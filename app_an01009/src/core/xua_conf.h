@@ -52,9 +52,7 @@
 #define LOW_POWER_ENABLE   (0)
 #endif
 
-#if LOW_POWER_ENABLE
-#define AUDIO_CLASS        (1)
-#else
+#ifndef AUDIO_CLASS
 #define AUDIO_CLASS        (2)
 #endif
 
