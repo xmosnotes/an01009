@@ -57,6 +57,7 @@
 #endif
 
 #define XUA_USE_SW_PLL     (0)
+#define XUA_DFU_EN		   (0)
 
 /*** Defines relating to feature placement regarding tiles ***/
 #define XUD_TILE           (1)
