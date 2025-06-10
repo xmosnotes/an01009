@@ -1,5 +1,9 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
+
+#ifndef _CORE_POWER_DOWN_H_
+#define _CORE_POWER_DOWN_H_
+
 #include <platform.h>
 
 
@@ -29,10 +33,12 @@ void power_up_tile(int t);
 
 // Sets XTAL to go straight to chip (nominally 24 MHz). Stores current setting for pll_bypass_off()
 // VCO is put into lowest power state whilst still responsive to future register writes
-// May be called from either tile
+// May be called from either tile but must be the same tile as pll_bypass_off()
 void pll_bypass_on(void);
 
 // Restore PLL setting saved from pll_bypass_on()
 // Note this takes up to 500us to resume. Chip will not be clocked until PLL is stable
-// May be called from either tile
+// May be called from either tile but must be the same tile as pll_bypass_on()
 void pll_bypass_off(void);
+
+#endif

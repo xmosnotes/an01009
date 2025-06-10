@@ -63,6 +63,7 @@ void power_up_tile(int t)
 
 unsigned pllCtrlVal = 0; // State for entry/exit to PLL off mode
 
+// May be called from either tile but must be the same tile as pll_bypass_off()
 void pll_bypass_on(void) {
     // Grab original setting once only
     if(pllCtrlVal == 0){
@@ -74,7 +75,7 @@ void pll_bypass_on(void) {
 
 
 // Note this takes up to 500us to resume. Chip will not be clocked until PLL is stable
-// May be called from either tile
+// May be called from either tile but must be the same tile as pll_bypass_on()
 void pll_bypass_off(void) {
     if(pllCtrlVal == 0){
         return; // we haven't done bypass_on yet
@@ -88,8 +89,8 @@ void pll_bypass_off(void) {
 }
 
 #ifndef BYPASS_PLL_DURING_SUSPEND
-#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. This will be required to reach the suspend target but is currenlty sometimes unreliable
-                                     // If not set, we just use the clock dividers which are robust, but do not meet suspend targets
+#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. This will be required to reach the suspend target but is currently sometimes unreliable in FS mode
+                                     // If not set, we just use the clock dividers which are robust, but do not meet suspend power targets
 #endif
 
 // Called from XUA EP0
@@ -137,7 +138,8 @@ void XUA_UserSuspendPowerUp()
     }
 }
 
-// TMP workaround
+// TMP workaround to ensure we don't suspend until we have seen the host at least once. It 
+// avoids multiple entries/exits from LP at startup
 void UserHostActive(int active)
 {
     printstr("UserHostActive ");printintln(active);

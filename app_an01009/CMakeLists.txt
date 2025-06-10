@@ -29,9 +29,10 @@ set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS}
 set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
                             -DLOW_POWER_ENABLE=1
                             -DXUA_CHAN_BUFF_CTRL=1
+                            -DXUD_SUSPEND_PHY=0
                             -DXUD_PRIORITY_HIGH=1
                             -DXUA_LOW_POWER_NON_STREAMING=1
-                            -DAUDIO_CLASS=1
+                            -DAUDIO_CLASS=2 #TODO change me to 1 when XUD/XUA is more stable for suspend in FS
                             )
 
 set(APP_INCLUDES    src

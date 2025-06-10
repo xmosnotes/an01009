@@ -81,7 +81,7 @@ void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned s
     }
 }
 
-/* Remote board server and thread safe client function */
+/* Thread safe remote board server task client function */
 unsafe chanend g_c_board_ctrl = null;
 swlock_t bc_swlock = SWLOCK_INITIAL_VALUE;
 
@@ -96,6 +96,7 @@ void send_board_ctrl_cmd(board_ctrl_cmd_t cmd)
     }
 }
 
+/* Must be on Tile[0] due to poers being on this tile */
 [[combinable]]
 void board_ctrl(chanend c_board_ctrl)
 {
@@ -115,10 +116,10 @@ void board_ctrl(chanend c_board_ctrl)
                         xk_audio_316_mc_ab_AudioHwShutdown();
                         break;
                     case BOARD_CTL_XCORE_VOLTAGE_NOMINAL:
-                        xk_audio_316_mc_ab_core_voltage_reduce(0);
+                        xk_audio_316_mc_ab_core_voltage_set(AUD_316_XCORE_VOLTAGE_0_9V);
                         break;
                     case BOARD_CTL_XCORE_VOLTAGE_REDUCE:
-                        xk_audio_316_mc_ab_core_voltage_reduce(1);
+                        xk_audio_316_mc_ab_core_voltage_set(AUD_316_XCORE_VOLTAGE_0_85V);
                         break;
                     default:
                         break;
