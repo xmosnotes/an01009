@@ -2,10 +2,10 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <platform.h>
 #include <print.h>
+#define XASSERT_UNIT AN01009_POWER_DOWN
 #include "xassert.h"
 #include "power_down.h"
 #include "audiohw_shared.h"
-
 
 static void switch_power_down(void)
 {
@@ -56,7 +56,6 @@ void power_up_tile(int t)
     set_core_clock_divider(tile[t], 1);
 }
 
-
 // Whole chip power down VCO @ 1MHz, output @ 0.125MHz. This sets the VCO to near off power whilst still operating
 // R = 24, F = 1, OD = 8
 #define PLL_CTL_VCO1_BYPASS  0x93800117 // Don't reset, in bypass, VCO @ 1MHz, output @ 0.125MHz.
@@ -93,15 +92,17 @@ void pll_bypass_off(void) {
                                      // If not set, we just use the clock dividers which are robust, but do not meet suspend power targets
 #endif
 
-// Called from XUA EP0
-int HostActiveOnce = !BYPASS_PLL_DURING_SUSPEND; // Have we been configured at all. This flag works around an issue where we see many suspends at startup, which means calls to LP break enumeration
-int inLowPower = 0; // Are we in low power. THis flag works around incomplete suspend/resume requests sometimes seen
+int g_inLowPower = 0; // Belt and braces flag ensures we don't double enter low/high power modes.
+                      // Note, in Debug build we assert.
 
 /* Called from Endpoint 0 - running on tile[1] in this application*/
 void XUA_UserSuspendPowerDown()
 {
-    if(LOW_POWER_ENABLE && HostActiveOnce && !inLowPower){
-        printstr("powerDown cb start\n");
+    assert(!g_inLowPower); // Fires in Debug build only!
+
+    if(LOW_POWER_ENABLE && ! g_inLowPower)
+    {
+        //printstr("powerDown cb start\n");
 #if BYPASS_PLL_DURING_SUSPEND
         // First disable the active mode power down dividers for the unused tile[0]
         power_up_tile(0);
@@ -116,14 +117,17 @@ void XUA_UserSuspendPowerDown()
         set_core_clock_divider(tile[1], LP_XCORE_DIV);
 #endif
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_REDUCE);
-        inLowPower = 1;
+        g_inLowPower = 1;
     }
 }
 
 /* Called from Endpoint 0 - running on tile[1] in this application */
 void XUA_UserSuspendPowerUp()
 {
-    if(LOW_POWER_ENABLE && HostActiveOnce && inLowPower){
+    assert(g_inLowPower); // Fires in Debug build only!
+
+    if(LOW_POWER_ENABLE && g_inLowPower)
+    {
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_NOMINAL);
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
@@ -133,12 +137,13 @@ void XUA_UserSuspendPowerUp()
 #else
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
 #endif
-        inLowPower = 0;
-        printstr("powerUp cb complete\n");
+        g_inLowPower = 0;
+        //printstr("powerUp cb complete\n");
     }
 }
 
-// TMP workaround to ensure we don't suspend until we have seen the host at least once. It 
+#if 0
+// TMP workaround to ensure we don't suspend until we have seen the host at least once. It
 // avoids multiple entries/exits from LP at startup
 void UserHostActive(int active)
 {
@@ -147,3 +152,4 @@ void UserHostActive(int active)
     if(BYPASS_PLL_DURING_SUSPEND)
         HostActiveOnce = 1;
 }
+#endif
