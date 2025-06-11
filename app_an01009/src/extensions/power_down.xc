@@ -126,7 +126,6 @@ void XUA_UserSuspendPowerUp()
     if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && g_inExtremeLowPower)
     {
         assert(g_inExtremeLowPower); // Fires in Debug build only!
-
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_NOMINAL);
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
