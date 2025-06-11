@@ -17,6 +17,7 @@ extern unsafe chanend g_c_board_ctrl;
 [[combinable]]
 void board_ctrl(chanend c_board_ctrl);
 
+
 /* Declarations that will be inserted in main.xc from lib_xua */
 #define USER_MAIN_DECLARATIONS                                          \
     interface i2c_master_if i2c[1];                                     \

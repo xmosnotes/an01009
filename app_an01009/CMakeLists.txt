@@ -9,7 +9,6 @@ set(APP_DEPENDENT_MODULES   "lib_sw_pll(develop)" # Clone sw_pll first so we get
                             "lib_xua(feat/suspend_notification_integration)" # TODO change me when merged/released
                             "lib_board_support(develop)" # TODO this needs bumping too when sw_pll dep is released
                             )
-
 set(APP_PCA_ENABLE ON)
 
 set(COMMON_COMPILER_FLAGS   -fcomment-asm
