@@ -8,10 +8,10 @@
 #include "xua.h"
 
 
-// Commands we can send to the xu316mc board controller task
+// Commands we can send to the xu316mc board controller task on tile[0]
 typedef enum board_ctrl_cmd_t{
     BOARD_CTL_BOARD_SETUP,
-    BOARD_CTL_AUDIO_HW_SHUTDOWN,
+    BOARD_CTL_AUDIO_HW_POWER_DOWN,
     BOARD_CTL_XCORE_VOLTAGE_NOMINAL,
     BOARD_CTL_XCORE_VOLTAGE_REDUCE
 } board_ctrl_cmd_t;

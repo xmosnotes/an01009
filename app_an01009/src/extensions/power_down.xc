@@ -1,7 +1,8 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <platform.h>
-#include <print.h>
+#define DEBUG_UNIT AN01009_POWER_DOWN
+#include "debug_print.h"
 #define XASSERT_UNIT AN01009_POWER_DOWN
 #include "xassert.h"
 #include "power_down.h"
@@ -102,7 +103,7 @@ void XUA_UserSuspendPowerDown()
 
     if(LOW_POWER_ENABLE && ! g_inLowPower)
     {
-        //printstr("powerDown cb start\n");
+        debug_printf("powerDown cb start\n");
 #if BYPASS_PLL_DURING_SUSPEND
         // First disable the active mode power down dividers for the unused tile[0]
         power_up_tile(0);
@@ -138,18 +139,7 @@ void XUA_UserSuspendPowerUp()
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
 #endif
         g_inLowPower = 0;
-        //printstr("powerUp cb complete\n");
+        debug_printf("powerUp cb complete\n");
     }
 }
 
-#if 0
-// TMP workaround to ensure we don't suspend until we have seen the host at least once. It
-// avoids multiple entries/exits from LP at startup
-void UserHostActive(int active)
-{
-    printstr("UserHostActive ");printintln(active);
-
-    if(BYPASS_PLL_DURING_SUSPEND)
-        HostActiveOnce = 1;
-}
-#endif
