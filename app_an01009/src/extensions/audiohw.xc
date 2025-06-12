@@ -1,8 +1,8 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-#include <print.h>
-
+#define DEBUG_UNIT AN01009_AUDIO_HW
+#include "debug_print.h"
 #include "xua.h"
 #include "xk_audio_316_mc_ab/board.h"
 extern "C" {
@@ -33,20 +33,21 @@ static xk_audio_316_mc_ab_config_t board_config =
 /* Configures the external audio hardware at startup. Called from tile[1] */
 void AudioHwInit()
 {
-    if(LOW_POWER_ENABLE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_up_tile(0);
     }
     delay_microseconds(10); // TODO needed to ensure stability on boot
     /* Tell remote task to enable board power */
     send_board_ctrl_cmd(BOARD_CTL_BOARD_SETUP);
-    printstr("AudioHwInit\n");
+    debug_printf("AudioHwInit\n");
     unsafe{
         /* Wait until global is set */
         while(!(unsigned) i_i2c_client);
         xk_audio_316_mc_ab_AudioHwInit((client interface i2c_master_if)i_i2c_client, board_config);
     }
-    if(LOW_POWER_ENABLE){
-        power_down_tile(0);
+    // Active power mode savings
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
+        power_down_tile_and_switch(0);
     }
 }
 
@@ -54,30 +55,37 @@ void AudioHwInit()
 void AudioHwShutdown()
 {
     /* First need to bring switch frequency up before we access PLL registers if powered down */
-    if(LOW_POWER_ENABLE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_up_tile(0);
     }
-    printstr("AudioHwShutdown\n");
+    debug_printf("AudioHwShutdown\n");
+    
+    /* Now shutdown audio gracefully via I2C to avoid clicks or pops */
+    unsafe{
+        xk_audio_316_mc_ab_AudioHwShutdown((client interface i2c_master_if)i_i2c_client);
+    }
+
+    /* Shutdown MCLK */
     sw_pll_fixed_clock(0);
-    if(LOW_POWER_ENABLE){
-        power_down_tile(0);
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
+        power_down_tile_and_switch(0);
     }
     /* Tell remote task to disable board power */
-    send_board_ctrl_cmd(BOARD_CTL_AUDIO_HW_SHUTDOWN);
-}
+    send_board_ctrl_cmd(BOARD_CTL_AUDIO_HW_POWER_DOWN);
+} // End of audio shutdown
 
 /* Configures the external audio hardware for the required sample frequency. Called from tile[1] */
 void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned sampRes_DAC, unsigned sampRes_ADC)
 {
-    if(LOW_POWER_ENABLE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_up_tile(0);
     }
-    printstr("AudioHwConfig ");printintln(samFreq);
+    debug_printf("AudioHwConfig %dHz\n", samFreq);
     unsafe {
         xk_audio_316_mc_ab_AudioHwConfig((client interface i2c_master_if)i_i2c_client, board_config, samFreq, mClk, dsdMode, sampRes_DAC, sampRes_ADC);
     }
-    if(LOW_POWER_ENABLE){
-        power_down_tile(0);
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
+        power_down_tile_and_switch(0);
     }
 }
 
@@ -112,8 +120,8 @@ void board_ctrl(chanend c_board_ctrl)
                     case BOARD_CTL_BOARD_SETUP:
                         xk_audio_316_mc_ab_board_setup(board_config);
                         break;
-                    case BOARD_CTL_AUDIO_HW_SHUTDOWN:
-                        xk_audio_316_mc_ab_AudioHwShutdown();
+                    case BOARD_CTL_AUDIO_HW_POWER_DOWN:
+                        xk_audio_316_mc_ab_AudioHwPowerdown();
                         break;
                     case BOARD_CTL_XCORE_VOLTAGE_NOMINAL:
                         xk_audio_316_mc_ab_core_voltage_set(AUD_316_XCORE_VOLTAGE_0_9V);

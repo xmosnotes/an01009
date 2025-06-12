@@ -6,6 +6,13 @@
 
 #include <platform.h>
 
+#ifndef AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND
+#define AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND 			0
+#endif
+
+#ifndef AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE
+#define AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE 	0
+#endif
 
 // Divider settings for LP. Note this is the actual division ratio. It is adjusted to the reg val in the below functions.
 #define LP_SWITCH_DIV   6
@@ -25,7 +32,7 @@ void disable_core_clock(tileref t);
 
 // Turns down core clock on tile[t] and switch clock
 // May be called from either tile
-void power_down_tile(int t);
+void power_down_tile_and_switch(int t);
 
 // Restores core clock on tile[t] and switch clock
 // May be called from either tile
