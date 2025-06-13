@@ -26,19 +26,11 @@ set(COMMON_COMPILER_FLAGS   -fcomment-asm
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND COMMON_COMPILER_FLAGS
                                         -DXASSERT_ENABLE_ASSERTIONS_AN01009_POWER_DOWN=1
-                                        -DXASSERT_ENABLE_DEBUG_AN01009_POWER_DOWN=1
+                                        -DDEBUG_PRINT_ENABLE_AN01009_POWER_DOWN=1
                                         -DXASSERT_ENABLE_ASSERTIONS_AN01009_AUDIO_HW=1
-                                        -DXASSERT_ENABLE_DEBUG_AN01009_AUDIO_HW=1
+                                        -DDEBUG_PRINT_ENABLE_AN01009_AUDIO_HW=1
                                )
     message(STATUS "Debug build - asserts and prints enabled")
-else()
-    list(APPEND COMMON_COMPILER_FLAGS
-                                        -DXASSERT_ENABLE_ASSERTIONS_AN01009_POWER_DOWN=0
-                                        -DXASSERT_ENABLE_DEBUG_AN01009_POWER_DOWN=0
-                                        -DXASSERT_ENABLE_ASSERTIONS_AN01009_AUDIO_HW=0
-                                        -DXASSERT_ENABLE_DEBUG_AN01009_AUDIO_HW=0
-                                 )
-    message(STATUS STD build - No asserts and prints enabled)
 endif()
 
 set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS}
