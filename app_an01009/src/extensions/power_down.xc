@@ -99,11 +99,11 @@ int g_inLowPower = 0; // Belt and braces flag ensures we don't double enter low/
 /* Called from Endpoint 0 - running on tile[1] in this application*/
 void XUA_UserSuspendPowerDown()
 {
-    assert(!g_inLowPower); // Fires in Debug build only!
-
-    if(LOW_POWER_ENABLE && ! g_inLowPower)
+    if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && ! g_inLowPower)
     {
+        assert(!g_inLowPower); // Fires in Debug build only!
         debug_printf("powerDown cb start\n");
+
 #if BYPASS_PLL_DURING_SUSPEND
         // First disable the active mode power down dividers for the unused tile[0]
         power_up_tile(0);
@@ -125,10 +125,10 @@ void XUA_UserSuspendPowerDown()
 /* Called from Endpoint 0 - running on tile[1] in this application */
 void XUA_UserSuspendPowerUp()
 {
-    assert(g_inLowPower); // Fires in Debug build only!
-
-    if(LOW_POWER_ENABLE && g_inLowPower)
+    if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && g_inLowPower)
     {
+        assert(g_inLowPower); // Fires in Debug build only!
+
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_NOMINAL);
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again

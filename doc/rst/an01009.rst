@@ -230,7 +230,7 @@ a macro to remove the call to ``set_thread_fast_mode_on()``.
  .. literalinclude:: ../../app_an01009/src/extensions/xud_conf.h
     :language: c
     :name: xud_thread_mode
-    :start-after: #ifdef LOW_POWER_ENABLE
+    :start-after: #ifdef AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE
     :end-before: #endif
 
 In addition, to ensure that XUD always receives sufficient MIPS in the cases where more than 5 hardware threads
@@ -268,7 +268,7 @@ modifying ``xua_conf.h``.
  .. literalinclude:: ../../app_an01009/src/core/xua_conf.h
     :language: c
     :name: xua_audio_class
-    :start-at: #ifdef LOW_POWER_ENABLE
+    :start-at: #ifdef AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE
     :end-at: #endif
 
 This saves a little core power but a more significant amount of PHY power, at the expense of reducing the capabilities of the 

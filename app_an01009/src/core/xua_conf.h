@@ -48,8 +48,8 @@
 #define MIN_FREQ           (48000)
 #endif
 
-#ifndef LOW_POWER_ENABLE
-#define LOW_POWER_ENABLE   (0)
+#ifndef AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND
+#define AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND   (0)
 #endif
 
 #ifndef AUDIO_CLASS

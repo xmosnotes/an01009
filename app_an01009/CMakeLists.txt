@@ -30,7 +30,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
                                         -DXASSERT_ENABLE_ASSERTIONS_AN01009_AUDIO_HW=1
                                         -DXASSERT_ENABLE_DEBUG_AN01009_AUDIO_HW=1
                                )
-    message(STATUS Debug build - asserts and prints enabled)
+    message(STATUS "Debug build - asserts and prints enabled")
 else()
     list(APPEND COMMON_COMPILER_FLAGS
                                         -DXASSERT_ENABLE_ASSERTIONS_AN01009_POWER_DOWN=0
@@ -38,17 +38,20 @@ else()
                                         -DXASSERT_ENABLE_ASSERTIONS_AN01009_AUDIO_HW=0
                                         -DXASSERT_ENABLE_DEBUG_AN01009_AUDIO_HW=0
                                  )
+    message(STATUS STD build - No asserts and prints enabled)
 endif()
 
 set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS}
                             -DAUDIO_CLASS=2)
 
 set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
-                            -DLOW_POWER_ENABLE=1
-                            -DXUA_CHAN_BUFF_CTRL=1
-                            -DXUD_SUSPEND_PHY=1
-                            -DXUD_PRIORITY_HIGH=1
                             -DXUA_LOW_POWER_NON_STREAMING=1
+                            -DAN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE=1
+                            -DXUA_CHAN_BUFF_CTRL=1
+                            -DAN01009_DISABLE_XUD_FAST_MODE=1
+                            -DXUD_PRIORITY_HIGH=1
+                            -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
+                            -DXUD_SUSPEND_PHY=1
                             -DAUDIO_CLASS=1
                             )
 
