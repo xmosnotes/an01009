@@ -33,7 +33,7 @@ static xk_audio_316_mc_ab_config_t board_config =
 /* Configures the external audio hardware at startup. Called from tile[1] */
 void AudioHwInit()
 {
-    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_up_tile(0);
     }
     delay_microseconds(10); // TODO needed to ensure stability on boot
@@ -46,7 +46,7 @@ void AudioHwInit()
         xk_audio_316_mc_ab_AudioHwInit((client interface i2c_master_if)i_i2c_client, board_config);
     }
     // Active power mode savings
-    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_down_tile_and_switch(0);
     }
 }
@@ -55,7 +55,7 @@ void AudioHwInit()
 void AudioHwShutdown()
 {
     /* First need to bring switch frequency up before we access PLL registers if powered down */
-    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_up_tile(0);
     }
     debug_printf("AudioHwShutdown\n");
@@ -67,7 +67,7 @@ void AudioHwShutdown()
 
     /* Shutdown MCLK */
     sw_pll_fixed_clock(0);
-    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_down_tile_and_switch(0);
     }
     /* Tell remote task to disable board power */
@@ -77,14 +77,14 @@ void AudioHwShutdown()
 /* Configures the external audio hardware for the required sample frequency. Called from tile[1] */
 void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned sampRes_DAC, unsigned sampRes_ADC)
 {
-    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_up_tile(0);
     }
     debug_printf("AudioHwConfig %dHz\n", samFreq);
     unsafe {
         xk_audio_316_mc_ab_AudioHwConfig((client interface i2c_master_if)i_i2c_client, board_config, samFreq, mClk, dsdMode, sampRes_DAC, sampRes_ADC);
     }
-    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
+    if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE){
         power_down_tile_and_switch(0);
     }
 }

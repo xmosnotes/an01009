@@ -37,7 +37,7 @@ set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS}
                             -DAUDIO_CLASS=2)
 
 set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
-                            -DAN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE=1
+                            -DAN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE=1
                             -DXUA_LOW_POWER_NON_STREAMING=1
                             -DXUA_CHAN_BUFF_CTRL=1
                             -DAN01009_DISABLE_XUD_FAST_MODE=1

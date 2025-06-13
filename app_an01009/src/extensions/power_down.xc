@@ -132,7 +132,7 @@ void XUA_UserSuspendPowerUp()
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
         pll_bypass_off();                   // Set PLL running at normal rate set by XN file
-        if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE)
+        if(AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE)
         {
             power_down_tile_and_switch(0);  // Power down for active mode
         }

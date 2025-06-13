@@ -10,8 +10,8 @@
 #define AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND 			0
 #endif
 
-#ifndef AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE
-#define AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE 	0
+#ifndef AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE
+#define AN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE 	0
 #endif
 
 // Divider settings for LP. Note this is the actual division ratio. It is adjusted to the reg val in the below functions.
