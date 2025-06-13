@@ -45,6 +45,7 @@ void AudioHwInit()
         while(!(unsigned) i_i2c_client);
         xk_audio_316_mc_ab_AudioHwInit((client interface i2c_master_if)i_i2c_client, board_config);
     }
+    // Active power mode savings
     if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
         power_down_tile_and_switch(0);
     }
@@ -59,7 +60,7 @@ void AudioHwShutdown()
     }
     debug_printf("AudioHwShutdown\n");
     
-    /* Now shutdown audio gracefully via I2C to avoid pops */
+    /* Now shutdown audio gracefully via I2C to avoid clicks or pops */
     unsafe{
         xk_audio_316_mc_ab_AudioHwShutdown((client interface i2c_master_if)i_i2c_client);
     }
@@ -71,7 +72,7 @@ void AudioHwShutdown()
     }
     /* Tell remote task to disable board power */
     send_board_ctrl_cmd(BOARD_CTL_AUDIO_HW_POWER_DOWN);
-}
+} // End of audio shutdown
 
 /* Configures the external audio hardware for the required sample frequency. Called from tile[1] */
 void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned sampRes_DAC, unsigned sampRes_ADC)
