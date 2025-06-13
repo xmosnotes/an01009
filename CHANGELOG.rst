@@ -6,6 +6,8 @@ AN01009 change log
 
   * ADDED: Support for power down of audio subsystem when
            device is enumerated but host isn't streaming
+  * ADDED: Support for power down of xcore and audio subystem
+           during USB suspend
 
 2.1.0
 -----

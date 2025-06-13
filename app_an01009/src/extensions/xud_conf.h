@@ -3,7 +3,11 @@
 #ifndef _XUD_CONF_H_
 #define _XUD_CONF_H_
 
-#if LOW_POWER_ENABLE
+#ifndef AN01009_DISABLE_XUD_FAST_MODE
+#define AN01009_DISABLE_XUD_FAST_MODE 0
+#endif
+
+#if AN01009_DISABLE_XUD_FAST_MODE
 // Delete the call to set_thread_fast_mode_on in XUD by defining the built-in as ""
 #define __builtin_set_thread_fast()
 #endif

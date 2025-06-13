@@ -48,13 +48,16 @@
 #define MIN_FREQ           (48000)
 #endif
 
-#if LOW_POWER_ENABLE
-#define AUDIO_CLASS        (1)
-#else
+#ifndef AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND
+#define AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND   (0)
+#endif
+
+#ifndef AUDIO_CLASS
 #define AUDIO_CLASS        (2)
 #endif
 
 #define XUA_USE_SW_PLL     (0)
+#define XUA_DFU_EN		   (0)
 
 /*** Defines relating to feature placement regarding tiles ***/
 #define XUD_TILE           (1)
