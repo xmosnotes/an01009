@@ -42,7 +42,7 @@ void disable_core_clock(tileref t)
     write_tile_config_reg(t, XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, 0x80000000);
 }
 
-void power_down_tile(int t)
+void power_down_tile_and_switch(int t)
 {
     switch_power_down();
     // Reduce tile 0 clock frequency
@@ -73,7 +73,6 @@ void pll_bypass_on(void) {
     write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_PLL_CTL_NUM, PLL_CTL_VCO1_BYPASS);
 }
 
-
 // Note this takes up to 500us to resume. Chip will not be clocked until PLL is stable
 // May be called from either tile but must be the same tile as pll_bypass_on()
 void pll_bypass_off(void) {
@@ -89,19 +88,18 @@ void pll_bypass_off(void) {
 }
 
 #ifndef BYPASS_PLL_DURING_SUSPEND
-#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. This will be required to reach the suspend target but is currently sometimes unreliable in FS mode
-                                     // If not set, we just use the clock dividers which are robust, but do not meet suspend power targets
+#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. If not set, we just use the clock dividers which not meet suspend power targets
 #endif
 
-int g_inLowPower = 0; // Belt and braces flag ensures we don't double enter low/high power modes.
-                      // Note, in Debug build we assert.
+int g_inExtremeLowPower = 0;    // Belt and braces flag ensures we don't double enter low/high power modes during suspend.
+                                // Note, in Debug build we assert if this is not tracked correctly.
 
 /* Called from Endpoint 0 - running on tile[1] in this application*/
 void XUA_UserSuspendPowerDown()
 {
-    if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && ! g_inLowPower)
+    if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && ! g_inExtremeLowPower)
     {
-        assert(!g_inLowPower); // Fires in Debug build only!
+        assert(!g_inExtremeLowPower); // Fires in Debug build only!
         debug_printf("powerDown cb start\n");
 
 #if BYPASS_PLL_DURING_SUSPEND
@@ -118,27 +116,30 @@ void XUA_UserSuspendPowerDown()
         set_core_clock_divider(tile[1], LP_XCORE_DIV);
 #endif
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_REDUCE);
-        g_inLowPower = 1;
+        g_inExtremeLowPower = 1;
     }
 }
 
 /* Called from Endpoint 0 - running on tile[1] in this application */
 void XUA_UserSuspendPowerUp()
 {
-    if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && g_inLowPower)
+    if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && g_inExtremeLowPower)
     {
-        assert(g_inLowPower); // Fires in Debug build only!
+        assert(g_inExtremeLowPower); // Fires in Debug build only!
 
         send_board_ctrl_cmd(BOARD_CTL_XCORE_VOLTAGE_NOMINAL);
 #if BYPASS_PLL_DURING_SUSPEND
         set_core_clock_divider(tile[0], 1); // Clock tile[0] at full rate again
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
         pll_bypass_off();                   // Set PLL running at normal rate set by XN file
-        power_down_tile(0);                 // Power tile[0] down for active mode
+        if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE)
+        {
+            power_down_tile_and_switch(0);  // Power down for active mode
+        }
 #else
         set_core_clock_divider(tile[1], 1); // Clock tile[1] at full rate again
 #endif
-        g_inLowPower = 0;
+        g_inExtremeLowPower = 0;
         debug_printf("powerUp cb complete\n");
     }
 }

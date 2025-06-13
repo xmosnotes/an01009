@@ -32,7 +32,7 @@ void disable_core_clock(tileref t);
 
 // Turns down core clock on tile[t] and switch clock
 // May be called from either tile
-void power_down_tile(int t);
+void power_down_tile_and_switch(int t);
 
 // Restores core clock on tile[t] and switch clock
 // May be called from either tile

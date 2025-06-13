@@ -46,7 +46,7 @@ void AudioHwInit()
         xk_audio_316_mc_ab_AudioHwInit((client interface i2c_master_if)i_i2c_client, board_config);
     }
     if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
-        power_down_tile(0);
+        power_down_tile_and_switch(0);
     }
 }
 
@@ -67,7 +67,7 @@ void AudioHwShutdown()
     /* Shutdown MCLK */
     sw_pll_fixed_clock(0);
     if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
-        power_down_tile(0);
+        power_down_tile_and_switch(0);
     }
     /* Tell remote task to disable board power */
     send_board_ctrl_cmd(BOARD_CTL_AUDIO_HW_POWER_DOWN);
@@ -84,7 +84,7 @@ void AudioHwConfig(unsigned samFreq, unsigned mClk, unsigned dsdMode, unsigned s
         xk_audio_316_mc_ab_AudioHwConfig((client interface i2c_master_if)i_i2c_client, board_config, samFreq, mClk, dsdMode, sampRes_DAC, sampRes_ADC);
     }
     if(AN01009_CLOCK_DOWN_SWITCH_AND_UNSED_TILE){
-        power_down_tile(0);
+        power_down_tile_and_switch(0);
     }
 }
 
