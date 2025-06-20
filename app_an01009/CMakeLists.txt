@@ -4,8 +4,7 @@ project(app_an01009)
 
 set(APP_HW_TARGET xk-audio-316-mc-tile1.xn)
 
-set(APP_DEPENDENT_MODULES   "lib_sw_pll(develop)" # Clone sw_pll first so we get the PLL off stuff
-                            "lib_xua(feat/suspend_notification_integration)" # TODO change me when merged/released
+set(APP_DEPENDENT_MODULES   "lib_xua(develop)" # TODO change me when merged/released
                             "lib_board_support(develop)" # TODO this needs bumping too when sw_pll dep is released
                             "lib_xassert(4.3.1)"
                             )
