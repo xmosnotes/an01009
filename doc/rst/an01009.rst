@@ -4,7 +4,7 @@ AN01009: Optimising USB Audio for stereo output, battery powered devices
 
 This application note characterises the expected power usage of the XMOS
 USB Audio reference design running on an `xcore.ai` device, configured for
-stereo-out applications. This document then outlines optional changes
+stereo playback applications. This document then outlines optional changes
 to the hardware and software, with the goal of reducing power consumption.
 
 This application note assumes that the design comprises an `XMOS` device to
@@ -26,7 +26,7 @@ This application note assumes that the reader is familiar with the
 and the `XMOS USB Audio reference design. <https://www.xmos.com/develop/usb-multichannel-audio/>`_
 
 The described and provided application executes on the `XK-AUDIO-316-MC` board. This note concerns
-itself with reducing the power consumption of the `xcore.ai` device only, however the provided 
+itself with reducing the power consumption of the `xcore.ai` device only, however the provided
 optimisations also allow for significant power reductions within the supporting audio hardware.
 
 .. warning::
@@ -68,10 +68,8 @@ consumption of the other supplies is estimated based on characterisation data.
             Test setup
 
 For each configuration, basic enumeration and playback was confirmed on Windows,
-with power being measured during audio playback, idle (non-streaming) and during USB suspend which can be 
+with power being measured during audio playback, idle (non-streaming) and during USB suspend which can be
 triggered by closing the lid.
-
-
 
 *******************
 Example application
@@ -118,8 +116,6 @@ or for the low-power optimised firmware::
 
     xrun bin/lp/app_an01009_lp.xe
 
-
-
 Once this command has executed the device should have enumerated on the host machine, and you may stream audio.
 
 .. _sec_optimisations:
@@ -152,15 +148,19 @@ impact was measured. These optimisations can be grouped into categories.
 * **Audio shutdown when idle**
   This improves non-streaming power consumption and USB suspend mode.
   By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the ``CMakeLists.txt`` makefile, ``lib_xua`` supports shutting down of
-  the audiohub subsystem which includes I²S. An additional callback ``AudioHwShutdown()`` is enabled which allows the user to 
+  the audiohub subsystem which includes I²S. An additional callback ``AudioHwShutdown()`` is enabled which allows the user to
   configure external hardware (eg. DAC) into low-power mode further saving system power. In addition, the on-chip Application PLL may
   be disabled (used in this application to provide the master clock) which further saves power draw by the `xcore`.
 
 * **Using full-speed USB**
-  This helps active and non-streaming power consumption. It provides a reduction of power through use of full speed USB rather than high-speed. This is important as it affects the PHY power consumed. ``lib_xua``     follows the standards and uses high-speed (480 Mbps) USB for Audio Class 2 and full-speed (12 Mbps) for Audio Class 1, although Audic Class 2 over full-speed is supported.
+  This helps active and non-streaming power consumption. It provides a reduction of power through
+  use of full speed USB rather than high-speed. This is important as it affects the PHY power
+  consumed.
 
-* **Extreme chip power down in USB Suspend** When the `xcore` receives a suspend notification from the host it is possible to reduce power significantly to a point where the `xcore` power draw is significantly below the USB Suspend specification of <= 2.5 mA from the bus by clocking the whole chip down to just a few MHz.
-
+* **Extreme chip power down in USB Suspend**
+  When the `xcore` receives a suspend notification from the host it is possible to reduce power
+  significantly to a point where the `xcore` power draw is significantly below the USB Suspend
+  specification of <= 2.5 mA from the bus by clocking the whole chip down to just a few MHz.
 
 **************
 Implementation
@@ -174,11 +174,26 @@ The power optimisations are all handled by two files:
 
 - ``power_down.xc`` which contains the `xcore` functions to reduce on-chip frequencies of various blocks as well as the callback implementation for USB suspend.
 
+Configuring `lib_xua`
+====================
+
+The `lib_xua` library can be configured by an application either setting the appropriate defines
+in the ``CMakeLists.txt`` file or by setting defines in ``xua_conf.h`` file.
+
+For example, setting ``XUD_USB_BUS_SPEED`` to ``1`` can be done in the application
+``CMakeLists.txt`` file as follows::
+
+    set(APP_COMPILER_FLAGS -DXUA_USB_BUS_SPEED=1)
+
+or in a ``xua_conf.h`` file as follows::
+
+    #define XUA_USB_BUS_SPEED 1
 
 Reducing frequencies
 ====================
 
-The provided source file ``src/extensions/power_down.xc`` contains a function which is run at audio hardware initialisation to reduce the active power consumption. 
+The provided source file ``src/extensions/power_down.xc`` contains a function which is run at audio
+hardware initialisation to reduce the active power consumption.
 
 The following clock divider reduces the System PLL frequency of 600 MHz to 120 MHz
 for the switch and reduces the System PLL frequency of 600 MHz to 9 MHz
@@ -209,7 +224,7 @@ by adjusting the following define in `CMakeLists.txt`::
 Event-based audio buffer
 ========================
 
-By default, ``lib_xua`` uses a performance and resource optimised audio buffer. Part of this buffer 
+By default, ``lib_xua`` uses a performance and resource optimised audio buffer. Part of this buffer
 consists of a polling loop which monitors shared-memory variables. This polling loop is always
 executing instructions and therefore consumes power at all times.
 
@@ -217,7 +232,7 @@ executing instructions and therefore consumes power at all times.
 two channel-ends but pauses the `decouple` thread until a shared-memory variable needs reading.
 Blocking on a channel de-schedules the thread and therefore saves a useful amount of power.
 
-Highly featured designs (especially those including digital inputs or outputs) may not have 
+Highly featured designs (especially those including digital inputs or outputs) may not have
 sufficient channel-end resources to implement this power-saving feature (resulting in a linker error)
 however simpler designs such as DACs, microphones or headphones can safely enable this feature.
 
@@ -231,7 +246,7 @@ XUD thread mode
 
 XUD normally sets ``set_thread_fast_mode_on()`` which improves IO timings in the core USB device library.
 However it also increases power consumption because the thread is always scheduled, even when waiting on an event. In low-power
-USB audio applications it can be acceptable to disable fast mode. 
+USB audio applications it can be acceptable to disable fast mode.
 
 The file ``xud_conf.h`` is included by ``lib_xud`` and you in that file define
 a macro to remove the call to ``set_thread_fast_mode_on()``.
@@ -256,13 +271,13 @@ Idle mode when not streaming
 
 By default ``lib_xua`` keeps I²S running even when audio is not streaming. This is useful when external systems rely on the
 audio clocks or features such as the audio mixer need to keep operating. For some applications, it is preferable to stop I²S
-and shutdown any associate audio hardware, which can be done using the following makefile setting::
+and shutdown any associated audio hardware, which can be done using the following define::
 
     -DXUA_LOW_POWER_NON_STREAMING=1
 
-The associated shutdown callback, which is enabled by this setting, can be seen populated for this application note below. Note ``lib_xua``
-disables the I²S ports prior to this and the callback handler in this application then disables the Application PLL which disables MCLK generation.
-
+The associated shutdown callback, which is enabled by this setting, can be seen populated for this application note below.
+Note ``lib_xua`` disables the I²S ports prior to this and the callback handler in this application
+then disables the Application PLL which disables MCLK generation.
 
  .. literalinclude:: ../../app_an01009/src/extensions/audiohw.xc
     :language: c
@@ -273,14 +288,12 @@ disables the I²S ports prior to this and the callback handler in this applicati
 Using full-speed USB
 ====================
 
-By switching to USB Audio Class one, ``lib_xua`` automatically uses full-speed USB when calling ``lib_xua``. This can be affected by
-modifying ``CMakeLists.txt``::
+By default ``lib_xua`` will use USB Audio Class 2.0 and request to run at high-speed. Limiting to
+full-speed can be achieved by setting ``XUA_USB_BUS_SPEED`` to ``1`` (``2`` for high-speed).
 
-    -DAUDIO_CLASS=1
-
-
-This saves a little core power but a more significant amount of PHY power, at the expense of reducing the capabilities of the 
-USB audio device by limiting it to 96 kHz which is the maximum for the given bus bandwidth. 
+This saves a little core power but a more significant amount of PHY power, at the expense of
+reducing the capabilities of the USB audio device by limiting it to 96 kHz which is the maximum
+for the given bus bandwidth.
 
 
 Extreme chip power down in USB Suspend
@@ -288,14 +301,15 @@ Extreme chip power down in USB Suspend
 
 Typically the `xcore` must be clocked at a nominal rate when USB is enabled. This is because the inner loop of `lib_xud` must
 communicate with the PHY at a rate of 60 MHz. This is the case even when the device is enumerated but not streaming because it
-still needs to respond to endpoint 0 requests and Start of Frame (SoF) packets from the host.
+still needs to respond to traffic from the host.
 
 However, when the host issues a suspend notification (which is typically done when the host sleeps) it is possible for the
 `xcore` to enter a very low power state since it need only monitor the D+ and D- line state for a resume notification.
 
 To exploit this, code is provided which performs the following steps:
 
-- Ensure the audio hardware is disabled and powered down and I²S is halted and the MCLK PLL is disabled. Requires ``XUA_LOW_POWER_NON_STREAMING`` to be set.
+- Ensure the audio hardware is disabled and powered down and I²S is halted and the MCLK PLL is disabled.
+  Requires ``XUA_LOW_POWER_NON_STREAMING`` to be set.
 - Disable the core PLL and bypass it so that the 24 MHz XTAL is used as the core clock source
 - Further clock down the chip by a factor of 10 from the XTAL so that the maximum on-chip clock is 2.4 MHz, which is fast enough to receive the resume notification but draws power close to the static power consumption.
 - Put the on-chip PHY in suspend mode
@@ -304,9 +318,7 @@ On USB resume, the chip is powered up in the reverse order of the above list and
 
 This power saving feature is enabled by modifying ``CMakeLists.txt``::
 
-
     -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
-    -DXUD_SUSPEND_PHY=1
 
 |newpage|
 
@@ -351,17 +363,17 @@ Streaming USB Audio at 48 kHz
 ======================================== =========== ========== ========
 Configuration                            Core Power  I/O Power  Total
 ======================================== =========== ========== ========
-Standard, 0.90V, 600 MHz, HS Class 2     200 mW       22 mW     222 mW
+Standard, 0.90V, 600 MHz, high-speed USB 200 mW       22 mW     222 mW
 Standard + tile/switch clock reduction   150 mW       22 mW     172 mW
 Standard + clock + event based buffer    105 mW       22 mW     127 mW
 Standard + clock + buffer + thread mode   77 mW       22 mW      99 mW
-Low-power, all optimisations, FS Class 1  73 mW       11 mW      84 mW
+Low-power, all optimisations, full-speed  73 mW       11 mW      84 mW
 ======================================== =========== ========== ========
 
 .. note::
     The above powers *include* an estimated 90% efficiency for the DC-DC converters.
-    Consequently the chip power is around 10% lower than the values shown. By selecting a 
-    more efficient DC-DC converter, overall power consumption may be further reduced. 
+    Consequently the chip power is around 10% lower than the values shown. By selecting a
+    more efficient DC-DC converter, overall power consumption may be further reduced.
 
 .. note::
     The additional power required to stream at 192 kHz, 24 bit (only possible with USB HS - 96 kHz, 24 bit limit for FS USB)
@@ -388,17 +400,16 @@ external hardware, such as the DAC.
 ======================================================= =========== ========== ========
 Configuration                                           Core Power  I/O Power  Total
 ======================================================= =========== ========== ========
-FS Class 1, no idle optimisation, streaming @ 48kHz     73 mW       11 mW      84 mW
-FS Class 1, no idle optimisation, idle (no streaming)   72 mW       10 mW      82 mW
-FS Class 1, XUA idle optimisation, idle (no streaming)  64 mW       10 mW      74 mW
-FS Class 1, USB Suspend                                  8 mW        2 mW      10 mW
+FS Class 2, no idle optimisation, streaming @ 48kHz     73 mW       11 mW      84 mW
+FS Class 2, no idle optimisation, idle (no streaming)   72 mW       10 mW      82 mW
+FS Class 2, XUA idle optimisation, idle (no streaming)  64 mW       10 mW      74 mW
+FS Class 2, USB Suspend                                  8 mW        2 mW      10 mW
 ======================================================= =========== ========== ========
 
 .. note::
     The above powers *include* an estimated 90% efficiency for the DC-DC converters.
-    Consequently the chip power is around 10% lower than the values shown. By selecting a 
-    more efficient DC-DC converter, overall power consumption may be further reduced. 
-
+    Consequently the chip power is around 10% lower than the values shown. By selecting a
+    more efficient DC-DC converter, overall power consumption may be further reduced.
 
 
 **************************************
@@ -419,7 +430,7 @@ importance:
 
 * Use 1.8V I/O (for example the xcore.ai `QF60A` part).
 
-* Replace the xcore.ai internal master clock PLL with an external MCLK source. This will save
+* Replace the `xcore.ai` internal master clock PLL with an external MCLK source. This will save
   a few milliwatts of xcore power at the expense of the power used by the external oscillator.
 
 * Select a low-power DAC, or at a minimum, one that supports a low-power mode when not streaming.
@@ -438,13 +449,13 @@ Conclusion
 **********
 
 This application note shows how some a variety of design optimisations can be made to reduce overall
-power consumption, when streaming audio, by approximately 55% (or 62% if USB FS is used) compared with the 
-baseline USB audio class 2 reference design, whilst still providing high-quality, bit-perfect USB audio playback.
+power consumption, when streaming audio, by approximately 55% (or 62% if USB FS is used) compared with the
+baseline USB Audio Reference Design, whilst still providing high-quality, bit-perfect USB audio playback.
 
-A further 10 to 13% of ``xcore.ai`` chip power may be saved when the device is enumerated, but not streaming, with the addition
+A further 10 to 13% of ``xcore.ai`` device power may be saved when the device is enumerated, but not streaming, with the addition
 of non-streaming power optimisations. Additionally the system power can be dramatically reduced by powering down the external audio hardware.
 
-During USB suspend, the `xcore.ai`` chip power may be reduced to well below the nominal 15 milliwatts required by the USB specification.
+During USB suspend, the `xcore.ai`` device power may be reduced to well below the nominal 15 milliwatts required by the USB specification.
 
 .. _further_reading:
 
