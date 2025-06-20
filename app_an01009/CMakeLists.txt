@@ -40,8 +40,7 @@ else()
                                  )
 endif()
 
-set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS}
-                            -DAUDIO_CLASS=2)
+set(APP_COMPILER_FLAGS_std  ${COMMON_COMPILER_FLAGS})
 
 set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
                             -DAN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE=1
@@ -50,14 +49,22 @@ set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
                             -DAN01009_DISABLE_XUD_FAST_MODE=1
                             -DXUD_PRIORITY_HIGH=1
                             -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
-                            -DXUD_SUSPEND_PHY=1
-                            -DAUDIO_CLASS=2
+                            )
+
+set(APP_COMPILER_FLAGS_lp_fs ${COMMON_COMPILER_FLAGS}
+                            -DAN01009_CLOCK_DOWN_SWITCH_AND_UNUSED_TILE=1
+                            -DXUA_LOW_POWER_NON_STREAMING=1
+                            -DXUA_CHAN_BUFF_CTRL=1
+                            -DAN01009_DISABLE_XUD_FAST_MODE=1
+                            -DXUD_PRIORITY_HIGH=1
+                            -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
+                            -DXUA_USB_BUS_SPEED=1
                             )
 
 set(APP_INCLUDES    src
                     src/core
                     src/extensions
-                                 )
+                    )
 
 set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
 
