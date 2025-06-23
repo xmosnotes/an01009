@@ -15,10 +15,9 @@
  * Note, we check if they are already defined in CMakeLists.txt
  */
 
-/*** Defines relating to basic functionality ***/
+#define XUA_BMAX_POWER (50) /* 100 mA */
 
 /*** Defines relating to channel counts ***/
-
 #define I2S_CHANS_DAC      (2)
 #define I2S_CHANS_ADC      (0)
 #define XUA_PWM_CHANNELS   (0)
