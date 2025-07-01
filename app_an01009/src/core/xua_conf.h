@@ -3,10 +3,6 @@
 #ifndef _XUA_CONF_H_
 #define _XUA_CONF_H_
 
-#ifndef AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND
-#define AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND   (0)
-#endif
-
 /*
  * Device configuration option defines to override default defines found lib_xua/api/xua_conf_defaults.h
  *

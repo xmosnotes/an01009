@@ -27,9 +27,12 @@ void set_core_clock_divider(tileref t, unsigned div)
 void enable_core_divider(void)
 {
     // First ensure we have initialised core divider to /1 so no nasty surprises when enabling the divider
-    if(get_local_tile_id() == get_tile_id(tile[0])){
+    if(get_local_tile_id() == get_tile_id(tile[0]))
+    {
         set_core_clock_divider(tile[0], 1);
-    } else if (get_local_tile_id() == get_tile_id(tile[1])){
+    }
+    else if (get_local_tile_id() == get_tile_id(tile[1]))
+    {
         set_core_clock_divider(tile[1], 1);
     }
 
@@ -88,7 +91,7 @@ void pll_bypass_off(void) {
 }
 
 #ifndef BYPASS_PLL_DURING_SUSPEND
-#define BYPASS_PLL_DURING_SUSPEND  1 // Experimental. If not set, we just use the clock dividers which not meet suspend power targets
+#define BYPASS_PLL_DURING_SUSPEND  1 // If not set, we just use the clock dividers which not meet suspend power targets
 #endif
 
 int g_inExtremeLowPower = 0;    // Belt and braces flag ensures we don't double enter low/high power modes during suspend.
@@ -105,7 +108,7 @@ void XUA_UserSuspendPowerDown()
 #if BYPASS_PLL_DURING_SUSPEND
         // First disable the active mode power down dividers for the unused tile[0]
         power_up_tile(0);
-        delay_microseconds(500); // TODO - this is needed for pll_bypass to be robust
+        delay_microseconds(500); // Delay is required for pll_bypass to be robust
         pll_bypass_on();
         set_core_clock_divider(tile[0], 10); // More power down 24 -> 2.4
         set_core_clock_divider(tile[1], 10);

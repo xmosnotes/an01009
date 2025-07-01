@@ -1,8 +1,8 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-#ifndef _CORE_POWER_DOWN_H_
-#define _CORE_POWER_DOWN_H_
+#ifndef _POWER_DOWN_H_
+#define _POWER_DOWN_H_
 
 #include <platform.h>
 

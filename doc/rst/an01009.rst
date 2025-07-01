@@ -244,29 +244,21 @@ The following define in the application in ``CMakeLists.txt`` enables the event-
 
     -DXUA_CHAN_BUFF_CTRL=1
 
-
 XUD thread mode
 ===============
 
-XUD normally sets ``set_thread_fast_mode_on()`` which improves IO timings in the core USB device library.
-However it also increases power consumption because the thread is always scheduled, even when waiting on an event. In low-power
-USB audio applications it can be acceptable to disable fast mode.
+XUD thread normally runs in `fast` mode which improves IO timings in the USB device library.
+However it also increases power consumption because the thread is always scheduled, even when waiting on an event.
+In low-power USB audio applications it can be acceptable to disable fast mode.
 
-The file ``xud_conf.h`` is included by ``lib_xud`` and you in that file define
-a macro to remove the call to ``set_thread_fast_mode_on()``.
+To do this, the following define is set in the application  ``CMakeLists.txt``::
 
- .. literalinclude:: ../../app_an01009/src/extensions/xud_conf.h
-    :language: c
-    :name: xud_thread_mode
-    :start-after: #if AN01009_DISABLE_XUD_FAST_MODE
-    :end-before: #endif
+    -DXUD_THREAD_MODE_FAST_EN=0
 
 In addition, to ensure that XUD always receives sufficient MIPS in the cases where more than 5 hardware threads
-are used on the XUD tile, the following defines are set in the ``CMakeLists.txt``::
+are used on same tile as XUD, the following define is also set in the application ``CMakeLists.txt``::
 
-    -DAN01009_DISABLE_XUD_FAST_MODE=1
     -DXUD_PRIORITY_HIGH=1
-
 
 Please see the :ref:`further reading section<further_reading>` for more information regarding `xcore` thread modes.
 

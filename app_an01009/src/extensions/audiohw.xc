@@ -59,7 +59,7 @@ void AudioHwShutdown()
         power_up_tile(0);
     }
     debug_printf("AudioHwShutdown\n");
-    
+
     /* Now shutdown audio gracefully via I2C to avoid clicks or pops */
     unsafe{
         xk_audio_316_mc_ab_AudioHwShutdown((client interface i2c_master_if)i_i2c_client);
