@@ -179,7 +179,7 @@ The power optimisations are all handled by two files:
 - ``power_down.xc`` which contains the `xcore` functions to reduce on-chip frequencies of various blocks as well as the callback implementation for USB suspend.
 
 Configuring `lib_xua`
-====================
+=====================
 
 The `lib_xua` library can be configured by an application either setting the appropriate defines
 in the ``CMakeLists.txt`` file or by setting defines in ``xua_conf.h`` file.
@@ -336,9 +336,8 @@ Current                   FSRX (12 Mbit/s)        HSRX (480 Mbit/s)
 IVCC33A                   11-40 uA (negligible)   1 mA (3 mW)
 IVCC18A                   4-5 mA (7-9 mW)         8 mA (14 mW)
 Oscillator, 1.8V          1 mW                    1 mW
-I²S power                 0.5 mw                  0.5 mw
-DC-DC efficiency          90%                     90%
-**Total**                 **11 mW**               **22 mW**
+I²S power                 0.5 mW                  0.5 mW
+**Total**                 **10 mW**               **19 mW**
 ========================= ======================= ======================
 
 Comparison of power optimisations
@@ -346,7 +345,8 @@ Comparison of power optimisations
 
 The tables below show the measured power consumption of `xcore.ai` running USB Audio
 reference design software with different optimisations. The calculated I/O power is added to get
-the total power consumption value (not including DAC or CODEC).
+the total power consumption value (not including DAC, CODEC, or power
+supply inefficiencies).
 
 The `Configuration` column lists the low-power firmware changes and resultant power consumptions achieved.
 
@@ -359,17 +359,12 @@ Streaming USB Audio at 48 kHz
 ======================================== =========== ========== ========
 Configuration                            Core Power  I/O Power  Total
 ======================================== =========== ========== ========
-Standard, 0.90V, 600 MHz, high-speed USB 200 mW       22 mW     222 mW
-Standard + tile/switch clock reduction   150 mW       22 mW     172 mW
-Standard + clock + event based buffer    105 mW       22 mW     127 mW
-Standard + clock + buffer + thread mode   77 mW       22 mW      99 mW
-Low-power, all optimisations, full-speed  73 mW       11 mW      84 mW
+Standard, 0.90V, 600 MHz, high-speed USB 182 mW       19 mW     201 mW
+Standard + tile/switch clock reduction   136 mW       19 mW     155 mW
+Standard + clock + event based buffer     95 mW       19 mW     114 mW
+Standard + clock + buffer + thread mode   70 mW       19 mW      89 mW
+Low-power, all optimisations, full-speed  66 mW       10 mW      76 mW
 ======================================== =========== ========== ========
-
-.. note::
-    The above powers *include* an estimated 90% efficiency for the DC-DC converters.
-    Consequently the chip power is around 10% lower than the values shown. By selecting a
-    more efficient DC-DC converter, overall power consumption may be further reduced.
 
 .. note::
     The additional power required to stream at 192 kHz, 24 bit (only possible with USB HS - 96 kHz, 24 bit limit for FS USB)
@@ -396,16 +391,11 @@ external hardware, such as the DAC.
 ======================================================= =========== ========== ========
 Configuration                                           Core Power  I/O Power  Total
 ======================================================= =========== ========== ========
-FS Class 2, no idle optimisation, streaming @ 48kHz     73 mW       11 mW      84 mW
-FS Class 2, no idle optimisation, idle (no streaming)   72 mW       10 mW      82 mW
-FS Class 2, XUA idle optimisation, idle (no streaming)  64 mW       10 mW      74 mW
+FS Class 2, no idle optimisation, streaming @ 48kHz     66 mW       10 mW      76 mW
+FS Class 2, no idle optimisation, idle (no streaming)   65 mW        9 mW      74 mW
+FS Class 2, XUA idle optimisation, idle (no streaming)  58 mW        9 mW      67 mW
 FS Class 2, USB Suspend                                  8 mW        2 mW      10 mW
 ======================================================= =========== ========== ========
-
-.. note::
-    The above powers *include* an estimated 90% efficiency for the DC-DC converters.
-    Consequently the chip power is around 10% lower than the values shown. By selecting a
-    more efficient DC-DC converter, overall power consumption may be further reduced.
 
 
 **************************************
