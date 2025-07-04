@@ -45,6 +45,7 @@ set(APP_COMPILER_FLAGS_lp   ${COMMON_COMPILER_FLAGS}
                             -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
                             -DXUA_LOW_POWER_NON_STREAMING=1
                             -DXUA_CHAN_BUFF_CTRL=1
+                            -DXUA_BMAX_POWER=125 # 250 mA
                             -DXUD_THREAD_MODE_FAST_EN=0
                             -DXUD_PRIORITY_HIGH=1
                             )
@@ -54,6 +55,7 @@ set(APP_COMPILER_FLAGS_lp_fs ${COMMON_COMPILER_FLAGS}
                             -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
                             -DXUA_LOW_POWER_NON_STREAMING=1
                             -DXUA_CHAN_BUFF_CTRL=1
+                            -DXUA_BMAX_POWER=125 # 250 mA
                             -DXUD_THREAD_MODE_FAST_EN=0
                             -DXUD_PRIORITY_HIGH=1
                             -DXUA_USB_BUS_SPEED=1
