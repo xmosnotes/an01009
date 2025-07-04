@@ -19,34 +19,34 @@ When powering systems from a battery, a fixed amount of energy is available.
 Reducing power dissipation allows the designer to either increase battery life or maintain the same
 battery life with a smaller battery, resulting in cost and form factor savings.
 By making different design choices and optimising the original `XMOS` USB Audio reference design,
-various power-saving techniques can be applied to achieve these goals
+it is possible to reduce power consumption.
 
 This application note assumes that the reader is familiar with the
 `The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
 and the `XMOS USB Audio reference design. <https://www.xmos.com/develop/usb-multichannel-audio/>`_
 
 The described and provided application executes on the `XK-AUDIO-316-MC` board. This note concerns
-itself with reducing the power consumption of the `xcore.ai` device only, however the provided
+itself with reducing the power consumption of the `xcore.ai` device only. However, the provided
 optimisations also allow for significant power reductions within the supporting audio hardware.
 
 .. warning::
 
     This application note describes steps for reducing power on an `XK-AUDIO-316-MC`
     board since it is readily and commercially available. However, the hardware arrangement of this
-    board does not lend itself to an ideal low power system configuration. Compromises made and details of
-    an ideal configuration are detailed in this document.
+    board does not lend itself to an ideal low power system configuration. Compromises made, and details of
+    an ideal configuration, are described in this document.
 
 ********
 Overview
 ********
 
-The power measurements have been made using the following test harness:
+The power measurements quoted in this note were made using the following test harness:
 
-- The `XK-AUDIO-316-MC` board. This board has a jumper (J24)
-  over which the 5V supply to the core power supply which is the main power draw of the chip,
-  upstream of the DC-DC converter, can be monitored. Note that this excludes 5V supply to 3V3 and 1V8 pins.
+- The `XK-AUDIO-316-MC` board has a jumper (J24) over which the 5V supply to the core power supply
+which is the main power draw of the chip, upstream of the DC-DC converter, can be monitored.
+*Note that this excludes 5V supply to 3V3 and 1V8 pins.*
 
-- XMOS USB Audio library ``lib_xua``. The version used was 5.0.0.
+- XMOS USB Audio library ``lib_xua`` version 5.1.0.
 
 - Host: HP ProBook 430 G7 running Windows 11 23H2.
 
@@ -67,9 +67,9 @@ consumption of the other supplies is estimated based on characterisation data.
 
             Test setup
 
-For each configuration, basic enumeration and playback was confirmed on Windows,
-with power being measured during audio playback, idle (non-streaming) and during USB suspend which can be
-triggered by closing the lid.
+For each configuration, basic enumeration and playback was confirmed whilst connected to the Windows
+host, with power being measured during audio playback, idle (non-streaming) and during USB suspend
+which was triggered by closing the lid of the laptop.
 
 *******************
 Example application
@@ -77,16 +77,26 @@ Example application
 
 An accompanying example application (``app_an01009``) is provided along side this application note.
 
-Two build configurations are provided; one with no power optimisations applied and one with all power
-optimisations enabled, allowing the user to quickly compare the power of the baseline and fully optimised versions.
+Three build configurations are provided; one with no power optimisations applied and two with all
+power optimisations enabled - one for high-speed and one for full-speed operations. These
+configurations allow quick comparison of the power between the baseline and fully optimised
+versions.
 
-Individual power optimisations may be enabled and disabled by following the steps in the :ref:`sec_optimisations` section.
+Individual power optimisations may be enabled and disabled by following the steps in the
+:ref:`sec_optimisations` section.
 
 Building the example
 ====================
 
-The application uses the `xcommon-cmake <https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest>`_,
-the `XMOS` build and dependency management system. `xcommon-cmake` is bundled with the XTC tools.
+This section assumes you have downloaded and installed the `XMOS XTC tools <https://www.xmos.com/software-tools/>`_
+(see `README` for required version).
+Installation instructions can be found `here <https://xmos.com/xtc-install-guide>`_.
+
+Be sure to pay attention to the section `Installation of required third-party tools
+<https://www.xmos.com/documentation/XM-014363-PC-10/html/installation/install-configure/install-tools/install_prerequisites.html>`_.
+
+The application uses the `xcommon-cmake <https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest>`_
+build system as bundled with the XTC tools. This system is based on `CMake <https://cmake.org/>`_
 
 The ``an01009`` software zip-file should be downloaded and unzipped to a chosen directory.
 
@@ -96,14 +106,20 @@ To configure the build, run the following from an XTC command prompt::
     cd app_an01009
     cmake -G "Unix Makefiles" -B build
 
-All required dependencies are included in the software download, however, if any were missing it is
+All required dependencies are included in the software download, however, if any are missing it is
 at this configure step that they will be downloaded by the build system.
 
-Finally, the application binary can be built using ``xmake``::
+Finally, the application binaries can be built using ``xmake``::
 
     xmake -j -C build
 
-This command will cause two binaries (.xe files) to be generated below the `app_an01009/bin` directory
+This command will cause binaries (.xe files) to be generated in relevant subdirectories of the
+`app_an01009/bin` directory, one for each of the build configurations.
+
+For subsequent builds, the ``cmake`` step can be omitted.
+
+If `CMakeLists.txt` or other `CMake` configuration files have been modified, ``xmake`` will
+automatically trigger ``cmake`` to regenerate the build system as required.
 
 Launching the example
 =====================
@@ -128,43 +144,50 @@ Once this command has executed the device should have enumerated on the host mac
 Optimisations
 *************
 
-A number of different optimisations were applied to the reference design and their
-impact was measured. These optimisations can be grouped into categories.
+This note applies a number of different optimisations to the reference design. The impact of each
+is reported following measurement. These optimisations can be grouped into the following categories:
 
 * **Reducing frequencies of unused resources**
   Execute all the software on one physical tile. This aids active and non-streaming power consumption.
   The `xcore` switch and other tile can both be slowed down. In this case, the frequency of tile[0]
-  is reduced to 9 MHz which means it can still execute low speed tasks, such as I²C master.
+  is reduced to 9 MHz which means it can still execute low speed tasks, such as I²C master -
+  required to configure external audio DAC of the `XK-AUDIO-316-MC` board.
   The hardware that is used for measuring power is suboptimal in this regard since the I²S and I²C
-  buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom system by switching the other tile off rather than just slowing it down.
+  buses are connected to two separate physical tiles. An extra 3 mW can be saved in a custom
+  hardware by switching the tile off rather than just reducing its frequency.
 
 * **Event-based buffering**
-  This aids active and non-streaming power consumption.
-  Ensure that as few instructions as possible are executed in the audio buffering subsystem
-  by only checking shared memory variables when needed through use of a channel event.
+  By default, for performance reasons, the USB Audio software buffering scheme uses some polled
+  shared memory variables. For lower channel count designs, such as stereo DACs the design can
+  be moved to use an event-based buffering scheme, aiding both active and non-streaming power
+  consumption.
+  This scheme ensures that as few instructions as possible are executed in the audio buffering
+  subsystem by only checking shared memory variables when needed through use of a channel event.
 
 * **XUD thread mode**
   This aids active and non-streaming power consumption.
   Disable `FAST` mode in ``XUD_Manager_loop`` in (``lib_xud``) and instead run the XUD thread in
-  `HIGH PRIORITY` mode which ensures it always receives 1/5 of the tile MIPS. For further information about the operation
-  of thread modes please refer to :ref:`further reading section<further_reading>` where you can find an appnote on this subject.
+  `HIGH PRIORITY` mode which ensures it always receives 1/5 of the tile MIPS. For further
+  information about the operation of thread modes please refer to :ref:`further reading section<further_reading>`
+  where a related application note is listed.
 
 * **Audio shutdown when idle**
   This improves non-streaming power consumption and USB suspend mode.
-  By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the ``CMakeLists.txt`` makefile, ``lib_xua`` supports shutting down of
-  the audiohub subsystem which includes I²S. An additional callback ``AudioHwShutdown()`` is enabled which allows the user to
-  configure external hardware (eg. DAC) into low-power mode further saving system power. In addition, the on-chip Application PLL may
-  be disabled (used in this application to provide the master clock) which further saves power draw by the `xcore`.
+  By setting ``XUA_LOW_POWER_NON_STREAMING`` to 1 in the ``CMakeLists.txt``, ``lib_xua`` supports shutting down of
+  the audio subsystem (which includes I²S). An additional callback ``AudioHwShutdown()`` is enabled which allows the user to
+  configure external hardware (eg. DAC) into low-power mode further saving system power. In
+  addition, the on-chip Secondary PLL may be disabled (used in this application to provide the
+  master clock) which further saves power draw by the `xcore`.
 
 * **Using full-speed USB**
   This helps active and non-streaming power consumption. It provides a reduction of power through
-  use of full speed USB rather than high-speed. This is important as it affects the PHY power
+  use of full speed USB rather than high-speed. This is relevant since it affects the PHY power
   consumed.
 
 * **Extreme chip power down in USB Suspend**
   When the `xcore` receives a suspend notification from the host it is possible to reduce power
   significantly to a point where the `xcore` power draw is significantly below the USB Suspend
-  specification of <= 2.5 mA from the bus by clocking the whole chip down to just a few MHz.
+  specification of <= 2.5 mA from the bus by clocking the whole device down to just a few MHz.
 
 **************
 Implementation
@@ -260,7 +283,7 @@ are used on same tile as XUD, the following define is also set in the applicatio
 
     -DXUD_PRIORITY_HIGH=1
 
-Please see the :ref:`further reading section<further_reading>` for more information regarding `xcore` thread modes.
+Please see the :ref:`further reading <further_reading>` for more information regarding `xcore` thread modes.
 
 Idle mode when not streaming
 ============================
@@ -316,8 +339,6 @@ This power saving feature is enabled by modifying ``CMakeLists.txt``::
 
     -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
 
-|newpage|
-
 ******************
 Power measurements
 ******************
@@ -368,10 +389,10 @@ Low-power, all optimisations, full-speed  66 mW       10 mW      76 mW
 
 .. note::
     The additional power required to stream at 192 kHz, 24 bit (only possible with USB HS - 96 kHz, 24 bit limit for FS USB)
-    is only a milliwatt or two.
+    is only 1-2 mW.
 
 .. note::
-    In (device) receive only applications, such as USB audio output only sound cards, USB Tx
+    In playback only applications, such as USB audio output only sound cards, USB Tx
     power in the USB PHY will be minimal.
 
 Idle (non-streaming) Audio
@@ -402,22 +423,22 @@ FS Class 2, USB Suspend                                  8 mW        2 mW      1
 Hardware for minimal power consumption
 **************************************
 
-This application measured the power on an `XK-AUDIO-316-MC` board, as that is commercially available
-and has a 0.1 ohm resistor across the 5V input to the core power supply.
+This application note reports measured power on an `XK-AUDIO-316-MC` board, as that is
+commercially available and has a 0.1 ohm resistor across the 5V input to the core power supply.
 
 In order to build a design that uses minimal power the following steps should be taken, in order of
 importance:
 
-* Put all I/O on tile 0; in particular I²S and I²C, and build with tile 0 for I/O and ``lib_xud``.
+* Place all I/O on tile 0; in particular I²S and I²C, and build with tile 0 for I/O and ``lib_xud``.
 
-* In the software, switch off tile 1 upon booting (see ``power_down.xc``) [#f1]_.
+* Switch off tile 1 upon booting (see ``power_down.xc``) [#f1]_.
 
 * Use a DC-DC converter to generate 1.8V from 5V for higher efficiency.
 
 * Use 1.8V I/O (for example the xcore.ai `QF60A` part).
 
 * Replace the `xcore.ai` internal master clock PLL with an external MCLK source. This will save
-  a few milliwatts of xcore power at the expense of the power used by the external oscillator.
+  a few milliwatts of `xcore` power at the expense of the power used by the external oscillator.
 
 * Select a low-power DAC, or at a minimum, one that supports a low-power mode when not streaming.
 
@@ -429,19 +450,48 @@ importance:
 .. [#f1] Note this does *not* affect the secondary PLL output pin muxed with IO pin `X1D11` of
    tile[1] which continues to operate as MCLK output.
 
-
 **********
 Conclusion
 **********
 
-This application note shows how some a variety of design optimisations can be made to reduce overall
-power consumption, when streaming audio, by approximately 55% (or 62% if USB FS is used) compared with the
-baseline USB Audio Reference Design, whilst still providing high-quality, bit-perfect USB audio playback.
+This application note shows how a variety of design optimisations can be made to reduce overall
+power consumption, when streaming audio, by approximately 55% (or 62% if full-speed USB is used)
+compared with the baseline USB Audio Reference Design, whilst still providing high-quality,
+bit-perfect USB audio playback.
 
-A further 10 to 13% of ``xcore.ai`` device power may be saved when the device is enumerated, but not streaming, with the inclusion
-of non-streaming power optimisations. Additionally the system power can be dramatically reduced by powering down the external audio hardware during the stream-stop state.
+A further 10 to 13% of ``xcore.ai`` device power may be saved when the device is enumerated, but
+not streaming, with the inclusion of non-streaming power optimisations. Additionally the system
+power can be dramatically reduced by powering down the external audio hardware during the
+stream-stop state.
 
-During USB suspend, the `xcore.ai`` device power may be reduced to well below the nominal 15 milliwatts required by the USB specification.
+During USB suspend, the `xcore.ai` device power may be reduced to well below the nominal
+15 milliwatts required by the USB specification.
+
+***************************
+Reporting power consumption
+***************************
+
+The `bMaxPower` field in the USB Configuration Descriptor specifies the maximum amount of current
+the device will draw from the USB bus when operating in bus-powered mode. Its value is expressed
+in units of 2 milliamps (mA), meaning a `bMaxPower` value of 50 corresponds to 100 mA.
+This field allows the host to manage power distribution among connected devices and ensure that
+overall power limits are not exceeded. For self-powered devices, bMaxPower should still reflect
+any power drawn from the bus, even if the main power comes from an external source.
+
+By default the `XMOS USB Audio Reference Design` sets the `bMaxPower` field to 500 mA (250) for
+bus-powered devices, which is the maximum allowed by the USB specification for a bus-powered device.
+For self-powered devices the `bMaxPower` field is set to 0 by default.
+
+When optimising for low power, the `bMaxPower` field should be set to the maximum expected current
+draw. This can be done by setting ``XUA_BMAX_POWER`` in the ``CMakeLists.txt`` file. For example::
+
+    -DXUA_BMAX_POWER=125 #250 mA
+
+.. note::
+
+   If a device is to correctly operate connected to a bus-powered USB hub, the `bMaxPower` field
+   must not be set to a value representing more than 100 mA as this is the maximum current a bus
+   powered USB 2.0 hub can provide on each port.
 
 .. _further_reading:
 
@@ -460,3 +510,4 @@ Further reading
 * `USB Multichannel Audio Evaluation Kit <https://www.xmos.com/xk-audio-316-mc-ab>`_
 
 * `The XS3 architecture manual <https://www.xmos.com/?s=XM-014007-PS>`_
+
