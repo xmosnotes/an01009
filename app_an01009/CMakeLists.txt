@@ -5,7 +5,7 @@ project(app_an01009)
 set(APP_HW_TARGET xk-audio-316-mc-tile1.xn)
 
 set(APP_DEPENDENT_MODULES   "lib_board_support(1.3.0)"
-                            "lib_xua(develop)" # TODO change me when xua merged/released
+                            "lib_xua(5.1.0)"
                             )
 
 set(APP_PCA_ENABLE ON)
