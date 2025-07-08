@@ -43,11 +43,9 @@ Overview
 The power measurements quoted in this note were made using the following test harness:
 
 - The `XK-AUDIO-316-MC` board has a jumper (J24) over which the 5V supply to the core power supply
-which is the main power draw of the chip, upstream of the DC-DC converter, can be monitored.
-*Note that this excludes 5V supply to 3V3 and 1V8 pins.*
-
+  which is the main power draw of the chip, upstream of the DC-DC converter, can be monitored. Note
+  that this excludes 5V supply to 3V3 and 1V8 pins.
 - XMOS USB Audio library ``lib_xua`` version 5.1.0.
-
 - Host: HP ProBook 430 G7 running Windows 11 23H2.
 
 A diagram of the chip power measurement method is shown :numref:`fig_power_setup`. There are
