@@ -1,4 +1,4 @@
-# This file relates to internal XMOS infrastructure and should be ignored by users
+# This file relates to internal XMOS infrastructure and should be ignored by external users
 ---
 an_number: an01009
 an_number_upper: AN01009
