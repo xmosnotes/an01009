@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.39.0') _
+@Library('xmos_jenkins_shared_library@develop') _
 
 getApproval()
 pipeline {
@@ -17,6 +17,11 @@ pipeline {
             name: 'XMOSDOC_VERSION',
             defaultValue: 'v7.3.0',
             description: 'xmosdoc version'
+        )
+        string(
+            name: 'INFR_APPS_VERSION',
+            defaultValue: 'feature/app_note_tests',
+            description: 'The infr_apps version'
         )
     }
 
@@ -48,6 +53,15 @@ pipeline {
             steps{
                 dir(REPO_NAME) {
                     xcoreBuild()
+                }
+            }
+        }
+
+        stage('Library checks') {
+            steps {
+                warnError("Library checks failed")
+                {
+                    runAppNoteChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
                 }
             }
         }
