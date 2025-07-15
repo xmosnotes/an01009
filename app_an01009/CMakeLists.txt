@@ -16,7 +16,6 @@ set(COMMON_COMPILER_FLAGS   -fcomment-asm
                             -lquadflash
                             -g
                             -DBOARD_SUPPORT_BOARD=XK_AUDIO_316_MC_AB
-                            -DUSB_TILE=tile[1]
                             -DXUD_CORE_CLOCK=600
                             -DDEBUG_PRINT_ENABLE=1
                             )
