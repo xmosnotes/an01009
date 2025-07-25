@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.39.0') _
+@Library('xmos_jenkins_shared_library@v0.40.0') _
 
 getApproval()
 pipeline {
@@ -17,6 +17,11 @@ pipeline {
             name: 'XMOSDOC_VERSION',
             defaultValue: 'v7.3.0',
             description: 'xmosdoc version'
+        )
+        string(
+            name: 'INFR_APPS_VERSION',
+            defaultValue: 'v3.1.0',
+            description: 'The infr_apps version'
         )
     }
 
@@ -52,12 +57,19 @@ pipeline {
             }
         }
 
+        stage('Repo checks') {
+            steps {
+                warnError("Repo checks failed")
+                {
+                    runRepoChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
+                }
+            }
+        }
+
         stage('Doc build') {
             steps {
                 dir(REPO_NAME) {
-                    createVenv()
-                    // Force Python doc build as docker-based xmosdoc can't access lib_xud in sandbox
-                    buildDocs(xmosdocVenvPath: "${REPO_NAME}")
+                    buildDocs()
                 }
             }
         }
