@@ -1,12 +1,12 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.40.0') _
+@Library('xmos_jenkins_shared_library@feature/release_flow_2') _
 
 getApproval()
 pipeline {
-    agent {
-        label 'documentation'
-    }
+
+    agent none
+
     parameters {
         string(
             name: 'TOOLS_VERSION',
@@ -23,6 +23,13 @@ pipeline {
             defaultValue: 'v3.1.0',
             description: 'The infr_apps version'
         )
+        booleanParam(
+            name: 'TRIGGER_RELEASE',
+            defaultValue: false,
+            description: '''WARNING:
+              Only press if you are happy to be noted as the deployer of this release.
+              Make sure it is reviewed and of release quality!'''
+        )
     }
 
     options {
@@ -32,61 +39,77 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps{
+        stage('🏗️ Build and test') {
+            agent {
+                label "documentation"
+            }
 
-                println "Stage running on ${env.NODE_NAME}"
+            stages {
+                stage('Checkout') {
+                    steps {
 
-                script {
-                    def (server, user, repo) = extractFromScmUrl()
-                    env.REPO_NAME = repo
+                        println "Stage running on ${env.NODE_NAME}"
+
+                        script {
+                            def (server, user, repo) = extractFromScmUrl()
+                            env.REPO_NAME = repo
+                            env.REPO = repo // For triggerRelease
+                        }
+
+                        dir(REPO_NAME)
+                        {
+                            checkoutScmShallow()
+                        }
+                    }
                 }
 
-                dir(REPO_NAME)
+                stage('Code build') {
+                    steps {
+                        dir(REPO_NAME) {
+                            xcoreBuild()
+                        }
+                    }
+                }
+
+                stage('Repo checks') {
+                    steps {
+                        warnError("Repo checks failed")
+                        {
+                            runRepoChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
+                        }
+                    }
+                }
+
+                stage('Doc build') {
+                    steps {
+                        dir(REPO_NAME) {
+                            buildDocs()
+                        }
+                    }
+                }
+
+                stage("Archive sandbox") {
+                    steps
+                    {
+                        archiveSandbox(REPO_NAME)
+                    }
+                }
+            } // stages
+            post {
+                cleanup
                 {
-                    checkoutScmShallow()
+                    xcoreCleanSandbox()
                 }
             }
-        }
+        } // stage 'Build and test'
 
-        stage('Code build') {
-            steps{
-                dir(REPO_NAME) {
-                    xcoreBuild()
-                }
+        stage('🚀 Release') {
+            when {
+                expression { params.TRIGGER_RELEASE }
             }
-        }
-
-        stage('Repo checks') {
             steps {
-                warnError("Repo checks failed")
-                {
-                    runRepoChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
-                }
+                triggerRelease()
             }
         }
-
-        stage('Doc build') {
-            steps {
-                dir(REPO_NAME) {
-                    buildDocs()
-                }
-            }
-        }
-
-        stage("Archive sandbox") {
-            steps
-            {
-                archiveSandbox(REPO_NAME)
-            }
-        }
-
     } // stages
-    post
-    {
-        cleanup
-        {
-             xcoreCleanSandbox()
-        }
-    }
 } // pipeline

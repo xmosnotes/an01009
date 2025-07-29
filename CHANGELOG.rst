@@ -1,6 +1,12 @@
 an01009 change log
 ==================
 
+2.2.1
+-----
+
+  * CHANGED:  No longer set USB_TILE define for lib_xua as this is now done in
+    lib_xua
+
 2.2.0
 -----
 
