@@ -448,23 +448,6 @@ importance:
 .. [#f1] Note this does *not* affect the secondary PLL output pin muxed with IO pin `X1D11` of
    tile[1] which continues to operate as MCLK output.
 
-**********
-Conclusion
-**********
-
-This application note shows how a variety of design optimisations can be made to reduce overall
-power consumption, when streaming audio, by approximately 55% (or 62% if full-speed USB is used)
-compared with the baseline USB Audio Reference Design, whilst still providing high-quality,
-bit-perfect USB audio playback.
-
-A further 10 to 13% of ``xcore.ai`` device power may be saved when the device is enumerated, but
-not streaming, with the inclusion of non-streaming power optimisations. Additionally the system
-power can be dramatically reduced by powering down the external audio hardware during the
-stream-stop state.
-
-During USB suspend, the `xcore.ai` device power may be reduced to well below the nominal
-15 milliwatts required by the USB specification.
-
 ***************************
 Reporting power consumption
 ***************************
@@ -490,6 +473,23 @@ draw. This can be done by setting ``XUA_BMAX_POWER`` in the ``CMakeLists.txt`` f
    If a device is to correctly operate connected to a bus-powered USB hub, the `bMaxPower` field
    must not be set to a value representing more than 100 mA as this is the maximum current a bus
    powered USB 2.0 hub can provide on each port.
+
+**********
+Conclusion
+**********
+
+This application note shows how a variety of design optimisations can be made to reduce overall
+power consumption, when streaming audio, by approximately 55% (or 62% if full-speed USB is used)
+compared with the baseline USB Audio Reference Design, whilst still providing high-quality,
+bit-perfect USB audio playback.
+
+A further 10 to 13% of ``xcore.ai`` device power may be saved when the device is enumerated, but
+not streaming, with the inclusion of non-streaming power optimisations. Additionally the system
+power can be dramatically reduced by powering down the external audio hardware during the
+stream-stop state.
+
+During USB suspend, the `xcore.ai` device power may be reduced to well below the nominal
+15 milliwatts required by the USB specification.
 
 .. _further_reading:
 
