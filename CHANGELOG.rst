@@ -1,6 +1,13 @@
 an01009 change log
 ==================
 
+2.2.2
+-----
+
+  * FIXED:  pll_bypass_off() now waits until the PLL has reached the full
+    operating frequency before returning
+  * ADDED:  Times for entering and exiting low power modes added to docs
+
 2.2.1
 -----
 

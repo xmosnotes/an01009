@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@feature/release_flow_2') _
+@Library('xmos_jenkins_shared_library@v0.42.0') _
 
 getApproval()
 pipeline {
@@ -15,7 +15,7 @@ pipeline {
         )
         string(
             name: 'XMOSDOC_VERSION',
-            defaultValue: 'v7.3.0',
+            defaultValue: 'v7.4.0',
             description: 'xmosdoc version'
         )
         string(
