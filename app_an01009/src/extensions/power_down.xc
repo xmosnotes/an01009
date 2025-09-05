@@ -8,6 +8,8 @@
 #include "power_down.h"
 #include "audiohw_shared.h"
 
+#define PLATFORM_OSCILLATOR_FREQUENCY_HZ    24000000 // Oscillator="24MHz" in .xn file. Used for coming out of pll_bypass
+
 static void switch_power_down(void)
 {
     write_node_config_reg(tile[0], XS1_SSWITCH_CLK_DIVIDER_NUM, (LP_SWITCH_DIV - 1));
@@ -40,6 +42,7 @@ void enable_core_divider(void)
     setps(XS1_PS_XCORE_CTRL0, val | (1 << 4)); // Set enable divider bit
 }
 
+// Completely disable core clock. This is a one way street. Since we need the other tile for I2C in this app, it is not used.
 void disable_core_clock(tileref t)
 {
     write_tile_config_reg(t, XS1_PSWITCH_PLL_CLK_DIVIDER_NUM, 0x80000000);
@@ -84,10 +87,33 @@ void pll_bypass_off(void) {
     }
     // Set old value stored by pll_bypass_on
     unsigned new_val = pllCtrlVal;
-    new_val &= ~0x40000000; // Ensure we wait for PLL lock
+    new_val &= ~0x40000000; // Ensure we wait for PLL lock. Note this is not reliable from a very slow start so we use the WDT below to double check PLL is up to speed
     new_val |= 0x80000000; // Do not reset chip on PLL write
-
     write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_PLL_CTL_NUM, new_val);
+
+    // Now use watchdog timer (clocked by XTAL in which is PLATFORM_OSCILLATOR_FREQUENCY_HZ) to ensure PLL has reached the target frequency before exiting suspend.
+    // We are counting the ref clock (nominal 100MHz) which is driven by the PLL and so we can tell when the PLL is up to full speed.
+    write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_WATCHDOG_PRESCALER_WRAP_NUM, PLATFORM_OSCILLATOR_FREQUENCY_HZ / 1000000 - 1); // 1 MHz (1us) ticks for WDT
+    const unsigned wdt_init_value = 100; // Start count here
+    const unsigned wdt_final_value = 50; // End count here
+    const unsigned wdt_counter_diff = wdt_init_value - wdt_final_value; // This is the number of microseconds we will measure the ref clock over
+    write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_WATCHDOG_CFG_NUM, 0x1); // enable counter and but NOT reset function
+    unsigned ref_clock_rate = 0;
+    // We can afford to look for < XS1_TIMER_HZ (nominal rate) because of the delay in starting the watchdog and grabbing the final ref clock count.
+    // So we always slightly over-estimate the ref clock speed. Typically this block takes 2-3 loops before we are sure of full operating PLL rate.
+    if(0){
+    // while(ref_clock_rate < XS1_TIMER_HZ) {
+        unsigned ref_clock_start, ref_clock_stop;
+        asm volatile("gettime %0" : "=r"(ref_clock_start));
+        write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_WATCHDOG_COUNT_NUM, wdt_init_value); // Start counting down from this
+        unsigned wdt_count = wdt_init_value;
+        while(wdt_count > wdt_final_value){
+            read_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_WATCHDOG_COUNT_NUM, wdt_count); // Poll WDT until we reach zero
+        }
+        asm volatile("gettime %0" : "=r"(ref_clock_stop));
+        unsigned ref_clk_ticks = ref_clock_stop - ref_clock_start;
+        ref_clock_rate = ref_clk_ticks * (1000000 / wdt_counter_diff);
+    }
 }
 
 #ifndef BYPASS_PLL_DURING_SUSPEND
@@ -98,7 +124,7 @@ int g_inExtremeLowPower = 0;    // Belt and braces flag ensures we don't double 
                                 // Note, in Debug build we assert if this is not tracked correctly.
 
 /* Called from Endpoint 0 - running on tile[1] in this application*/
-void XUA_UserSuspendPowerDown()
+void XUA_UserSuspendPowerDown(void)
 {
     if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && ! g_inExtremeLowPower)
     {
@@ -124,7 +150,7 @@ void XUA_UserSuspendPowerDown()
 }
 
 /* Called from Endpoint 0 - running on tile[1] in this application */
-void XUA_UserSuspendPowerUp()
+void XUA_UserSuspendPowerUp(void)
 {
     if(AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND && g_inExtremeLowPower)
     {
