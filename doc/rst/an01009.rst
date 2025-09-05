@@ -337,6 +337,7 @@ This power saving feature is enabled by modifying ``CMakeLists.txt``::
 
     -DAN01009_CLOCK_DOWN_CHIP_IN_SUSPEND=1
 
+
 ******************
 Power measurements
 ******************
@@ -415,6 +416,30 @@ FS Class 2, no idle optimisation, idle (no streaming)   65 mW        9 mW      7
 FS Class 2, XUA idle optimisation, idle (no streaming)  58 mW        9 mW      67 mW
 FS Class 2, USB Suspend                                  8 mW        2 mW      10 mW
 ======================================================= =========== ========== ========
+
+*******************************
+Timing for entering USB suspend
+*******************************
+
+When the define ``AN01009_CLOCK_DOWN_CHIP_IN_SUSPEND`` is enabled, on a USB suspend event, the core xcore.ai's core PLL is powered down.
+This is handled via the ``XUA_UserSuspendPowerDown()`` and ``XUA_UserSuspendPowerUp()``
+callbacks from ``lib_xua``. These functions must not return until all power state changes have been completed, particularly the power-up call, since
+this may result in some functions not meeting timing.
+
+Because it is not possible to recover from a full-disabled PLL without a reset, the VCO is set to a low value of 1 MHz which results in very low power consumption
+but is recoverable under software control. The full operating VCO speed is nominally 600 MHz, and the time it takes to sweep up the frequency from
+power-down to full rate can vary slightly across process, voltage and temperature (PVT) changes in the chip used.
+
+Code is included in ``power_down.xc`` to count the number of external 24 MHz XTAL in clocks versus the reference clock (nominally 100 MHz clocked from the PLL)
+to ensure the chip is operating at full rate before returning to the full power state. The typical time taken to enter and exit USB suspend (measured from the command being received by ``lib_xud``)
+is shown in the following table.
+
+========================= ================
+State transition          Time     
+========================= ================
+stream idle -> suspend    931 microseconds
+suspend -> stream idle    923 microseconds         
+========================= ================
 
 
 **************************************

@@ -101,8 +101,7 @@ void pll_bypass_off(void) {
     unsigned ref_clock_rate = 0;
     // We can afford to look for < XS1_TIMER_HZ (nominal rate) because of the delay in starting the watchdog and grabbing the final ref clock count.
     // So we always slightly over-estimate the ref clock speed. Typically this block takes 2-3 loops before we are sure of full operating PLL rate.
-    if(0){
-    // while(ref_clock_rate < XS1_TIMER_HZ) {
+    while(ref_clock_rate < XS1_TIMER_HZ) {
         unsigned ref_clock_start, ref_clock_stop;
         asm volatile("gettime %0" : "=r"(ref_clock_start));
         write_sswitch_reg(get_local_tile_id(), XS1_SSWITCH_WATCHDOG_COUNT_NUM, wdt_init_value); // Start counting down from this
