@@ -20,7 +20,7 @@ pipeline {
         )
         string(
             name: 'INFR_APPS_VERSION',
-            defaultValue: 'v3.1.0',
+            defaultValue: 'v3.1.1',
             description: 'The infr_apps version'
         )
         booleanParam(
@@ -75,7 +75,7 @@ pipeline {
                     steps {
                         warnError("Repo checks failed")
                         {
-                            runRepoChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
+                            runRepoChecks("${WORKSPACE}/${REPO_NAME}")
                         }
                     }
                 }
